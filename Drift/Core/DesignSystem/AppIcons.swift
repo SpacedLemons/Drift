@@ -1,0 +1,49 @@
+//
+//  AppIcons.swift
+//  Drift
+//
+//  Created by Lucas Stuart West Rogers on 12/05/2026.
+//
+
+enum AppIcons {
+  static let mic = "mic.fill"
+  static let pause = "pause.fill"
+  static let play = "play.fill"
+  static let checkmark = "checkmark"
+  static let warning = "exclamationmark.triangle"
+  static let xmark = "xmark"
+  static let pencil = "pencil"
+  static let trash = "trash"
+  static let share = "square.and.arrow.up"
+  static let search = "magnifyingglass"
+  static let calendar = "calendar"
+  static let clock = "clock"
+  static let repeatArrows = "repeat"
+  static let tag = "tag"
+  static let mood = "face.smiling"
+  static let favoriteEmpty = "heart"
+  static let favorite = "heart.fill"
+  static let shield = "shield"
+  static let lockShield = "lock.shield"
+  static let back = "chevron.left"
+  static let chevronLeft = "chevron.left"
+  static let chevronRight = "chevron.right"
+  static let chevronUp = "chevron.up"
+  static let chevronDown = "chevron.down"
+  static let waveform = "waveform"
+  static let sparkles = "sparkles"
+  static let success = "checkmark.circle.fill"
+  static let book = "book"
+  static let chart = "chart.bar"
+  static let settings = "gearshape"
+  static let bell = "bell"
+  static let paintPalette = "paintpalette"
+  static let externalDrive = "externaldrive"
+  static let info = "info.circle"
+  static let notification = "bell.badge"
+  static let colorSwatch = "circle.lefthalf.filled"
+  static let photo = "photo"
+  static let photoAdd = "photo.badge.plus"
+  static let chartLine = "chart.xyaxis.line"
+  static let question = "questionmark.circle"
+}

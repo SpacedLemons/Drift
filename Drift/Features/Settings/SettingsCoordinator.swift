@@ -1,0 +1,30 @@
+//
+//  SettingsCoordinator.swift
+//  Drift
+//
+//  Created by Lucas Stuart West Rogers on 12/05/2026.
+//
+
+import Observation
+
+@MainActor
+@Observable
+final class SettingsCoordinator {
+  var path: [SettingsRoute] = []
+
+  func showReminders() {
+    path.append(.reminders)
+  }
+
+  func showAppearance() {
+    path.append(.appearance)
+  }
+
+  func showPrivacy() {
+    path.append(.privacy)
+  }
+
+  func showAbout() {
+    path.append(.about)
+  }
+}
