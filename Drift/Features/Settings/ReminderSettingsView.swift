@@ -23,7 +23,6 @@ struct ReminderSettingsView: View {
         VStack(alignment: .leading, spacing: AppSpacing.l) {
           permissionStatusCard
           reminderSection
-          ReminderNotificationPreviewCard(message: viewModel.configuration.message)
           privacyCard
 
           if let errorMessage = viewModel.errorMessage {
@@ -201,45 +200,6 @@ struct ReminderSettingsView: View {
     case .unknown, .granted: AppColors.accent
     case .denied, .restricted: AppColors.warmAccent
     }
-  }
-}
-
-private struct ReminderNotificationPreviewCard: View {
-  let message: String
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: AppSpacing.m) {
-      Label("Preview", systemImage: AppIcons.notification)
-        .font(AppTypography.cardTitle)
-        .foregroundStyle(AppColors.textPrimary)
-
-      VStack(alignment: .leading, spacing: AppSpacing.s) {
-        Text(
-          message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? ReminderConfiguration.default.message
-            : message
-        )
-        .font(AppTypography.bodyEmphasis)
-        .foregroundStyle(AppColors.textPrimary)
-        .fixedSize(horizontal: false, vertical: true)
-
-        Text("Note journal entry · Remind me later · Not now")
-          .font(AppTypography.caption)
-          .foregroundStyle(AppColors.textSecondary)
-          .fixedSize(horizontal: false, vertical: true)
-      }
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(AppSpacing.m)
-    .background(
-      AppColors.surface.opacity(0.84),
-      in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
-    )
-    .overlay {
-      RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
-        .stroke(AppColors.border, lineWidth: 1)
-    }
-    .accessibilityElement(children: .combine)
   }
 }
 

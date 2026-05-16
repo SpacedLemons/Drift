@@ -18,23 +18,35 @@ struct CalendarStripView: View {
   let selectDate: (Date?) -> Void
   let moveMonth: (Int) -> Void
 
+  @Namespace private var selectionNamespace
+
   private let calendar = Calendar.current
+  private let selectionGeometryID = "calendar-selected-day"
+  private let compactStripHeight: CGFloat = 62
 
   var body: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
       calendarHeader
+      compactDateStrip
+        .opacity(isExpanded ? 0 : 1)
+        .scaleEffect(x: 1, y: isExpanded ? 0.96 : 1, anchor: .top)
+        .frame(height: isExpanded ? 0 : compactStripHeight, alignment: .top)
+        .clipped(antialiased: true)
+        .allowsHitTesting(!isExpanded)
+        .accessibilityHidden(isExpanded)
 
       if isExpanded {
         MonthCalendarView(
           selectedMonthTitle: selectedMonthTitle,
           weekdaySymbols: weekdaySymbols,
           calendarDays: calendarDays,
+          selectionNamespace: selectionNamespace,
+          selectionGeometryID: selectionGeometryID,
+          selectionIsSource: isExpanded,
           selectDate: selectDate,
           moveMonth: moveMonth
         )
-        .transition(.opacity.combined(with: .move(edge: .top)))
-      } else {
-        compactDateStrip
+        .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
       }
     }
     .animation(AppAnimation.gentle, value: isExpanded)
@@ -54,7 +66,9 @@ struct CalendarStripView: View {
 
       Button(
         action: {
-          toggleExpansion()
+          withAnimation(AppAnimation.gentle) {
+            toggleExpansion()
+          }
         },
         label: {
           Image(systemName: isExpanded ? AppIcons.chevronUp : AppIcons.chevronDown)
@@ -75,7 +89,9 @@ struct CalendarStripView: View {
         ForEach(compactDays, id: \.self) { day in
           Button(
             action: {
-              selectDate(day)
+              withAnimation(AppAnimation.gentle) {
+                selectDate(day)
+              }
             },
             label: {
               compactDateCell(for: day)
@@ -91,20 +107,32 @@ struct CalendarStripView: View {
   private func compactDateCell(for day: Date) -> some View {
     let isSelected = selectedDate.map { calendar.isDate($0, inSameDayAs: day) } ?? false
 
-    return VStack(spacing: AppSpacing.xs) {
-      Text(day, format: .dateTime.weekday(.narrow))
-        .font(AppTypography.caption)
-        .foregroundStyle(isSelected ? .white : AppColors.textTertiary)
+    return ZStack {
+      RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
+        .fill(AppColors.surface)
 
-      Text(day, format: .dateTime.day())
-        .font(.system(.headline, design: .rounded, weight: .semibold))
-        .foregroundStyle(isSelected ? .white : AppColors.textPrimary)
+      if isSelected {
+        RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
+          .fill(AppColors.accent)
+          .matchedGeometryEffect(
+            id: selectionGeometryID,
+            in: selectionNamespace,
+            properties: .frame,
+            isSource: !isExpanded
+          )
+      }
+
+      VStack(spacing: AppSpacing.xs) {
+        Text(day, format: .dateTime.weekday(.narrow))
+          .font(AppTypography.caption)
+          .foregroundStyle(isSelected ? .white : AppColors.textTertiary)
+
+        Text(day, format: .dateTime.day())
+          .font(.system(.headline, design: .rounded, weight: .semibold))
+          .foregroundStyle(isSelected ? .white : AppColors.textPrimary)
+      }
     }
     .frame(width: 48, height: 60)
-    .background(
-      RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
-        .fill(isSelected ? AppColors.accent : AppColors.surface)
-    )
     .overlay {
       RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
         .stroke(isSelected ? AppColors.accent.opacity(0.4) : AppColors.border, lineWidth: 1)
@@ -118,6 +146,9 @@ private struct MonthCalendarView: View {
   let selectedMonthTitle: String
   let weekdaySymbols: [String]
   let calendarDays: [CalendarDayState]
+  let selectionNamespace: Namespace.ID
+  let selectionGeometryID: String
+  let selectionIsSource: Bool
   let selectDate: (Date?) -> Void
   let moveMonth: (Int) -> Void
 
@@ -134,7 +165,7 @@ private struct MonthCalendarView: View {
       )
 
       LazyVGrid(columns: columns, spacing: AppSpacing.xs) {
-        ForEach(weekdaySymbols, id: \.self) { symbol in
+        ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
           Text(symbol)
             .font(AppTypography.caption)
             .foregroundStyle(AppColors.textTertiary)
@@ -142,7 +173,13 @@ private struct MonthCalendarView: View {
         }
 
         ForEach(calendarDays) { day in
-          CalendarDayCell(day: day, selectDate: selectDate)
+          CalendarDayCell(
+            day: day,
+            selectionNamespace: selectionNamespace,
+            selectionGeometryID: selectionGeometryID,
+            selectionIsSource: selectionIsSource,
+            selectDate: selectDate
+          )
         }
       }
     }
@@ -214,6 +251,9 @@ private struct CalendarMonthHeader: View {
 
 private struct CalendarDayCell: View {
   let day: CalendarDayState
+  let selectionNamespace: Namespace.ID
+  let selectionGeometryID: String
+  let selectionIsSource: Bool
   let selectDate: (Date?) -> Void
 
   var body: some View {
@@ -221,20 +261,37 @@ private struct CalendarDayCell: View {
       if let date = day.date, let dayNumber = day.dayNumber {
         Button(
           action: {
-            selectDate(date)
+            withAnimation(AppAnimation.gentle) {
+              selectDate(date)
+            }
           },
           label: {
-            VStack(spacing: AppSpacing.xxs) {
-              Text("\(dayNumber)")
-                .font(.system(.body, design: .rounded, weight: .semibold))
-                .foregroundStyle(day.isSelected ? .white : AppColors.textPrimary)
+            ZStack {
+              RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
+                .fill(dayBaseBackground)
 
-              Circle()
-                .fill(day.hasEntries ? AppColors.accentSecondary : .clear)
-                .frame(width: 5, height: 5)
+              if day.isSelected {
+                RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
+                  .fill(AppColors.accent)
+                  .matchedGeometryEffect(
+                    id: selectionGeometryID,
+                    in: selectionNamespace,
+                    properties: .frame,
+                    isSource: selectionIsSource
+                  )
+              }
+
+              VStack(spacing: AppSpacing.xxs) {
+                Text("\(dayNumber)")
+                  .font(.system(.body, design: .rounded, weight: .semibold))
+                  .foregroundStyle(day.isSelected ? .white : AppColors.textPrimary)
+
+                Circle()
+                  .fill(day.hasEntries ? AppColors.accentSecondary : .clear)
+                  .frame(width: 5, height: 5)
+              }
             }
             .frame(maxWidth: .infinity, minHeight: 44)
-            .background(dayBackground)
             .overlay {
               RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
                 .stroke(dayBorder, lineWidth: 1)
@@ -252,11 +309,7 @@ private struct CalendarDayCell: View {
     }
   }
 
-  private var dayBackground: some ShapeStyle {
-    if day.isSelected {
-      return AnyShapeStyle(AppColors.accent)
-    }
-
+  private var dayBaseBackground: some ShapeStyle {
     if day.isToday {
       return AnyShapeStyle(AppColors.accent.opacity(0.16))
     }

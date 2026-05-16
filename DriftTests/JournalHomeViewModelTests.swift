@@ -218,6 +218,38 @@ struct JournalHomeViewModelTests {
   }
 
   @Test
+  func calendarWeekdaysRotateFromFirstDayOfMonth() async throws {
+    let calendar = calendarForTests()
+    let now = fixtureDate(calendar: calendar, year: 2026, month: 7, day: 13)
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: []),
+      calendar: calendar,
+      now: { now }
+    )
+
+    #expect(viewModel.weekdaySymbols == ["W", "T", "F", "S", "S", "M", "T"])
+
+    viewModel.moveSelectedMonth(by: 1)
+
+    #expect(viewModel.weekdaySymbols == ["S", "S", "M", "T", "W", "T", "F"])
+  }
+
+  @Test
+  func calendarDaysStartWithFirstDayOfMonth() async throws {
+    let calendar = calendarForTests()
+    let now = fixtureDate(calendar: calendar, year: 2026, month: 7, day: 13)
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: []),
+      calendar: calendar,
+      now: { now }
+    )
+
+    #expect(viewModel.calendarDays.first?.dayNumber == 1)
+    #expect(
+      Array(viewModel.calendarDays.prefix(7).compactMap(\.dayNumber)) == [1, 2, 3, 4, 5, 6, 7])
+  }
+
+  @Test
   func selectDateFiltersEntriesAndMovesSelectedMonth() async throws {
     let calendar = calendarForTests()
     let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
@@ -298,6 +330,7 @@ private enum TestJournalHomeRepositoryError: Error {
 
 private func calendarForTests() -> Calendar {
   var calendar = Calendar(identifier: .gregorian)
+  calendar.locale = Locale(identifier: "en_US_POSIX")
   calendar.timeZone = fixtureTimeZone(secondsFromGMT: 0)
   calendar.firstWeekday = 2
   return calendar

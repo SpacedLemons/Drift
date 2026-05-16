@@ -66,8 +66,15 @@ final class JournalHomeViewModel {
   }
 
   var weekdaySymbols: [String] {
+    guard
+      let firstDayOfMonth = calendar.date(
+        from: calendar.dateComponents([.year, .month], from: selectedMonth))
+    else {
+      return []
+    }
+
     let symbols = calendar.veryShortStandaloneWeekdaySymbols
-    let firstIndex = max(calendar.firstWeekday - 1, 0)
+    let firstIndex = max(calendar.component(.weekday, from: firstDayOfMonth) - 1, 0)
     return Array(symbols[firstIndex...] + symbols[..<firstIndex])
   }
 
@@ -80,12 +87,7 @@ final class JournalHomeViewModel {
       return []
     }
 
-    let leadingBlankCount = leadingBlankCount(for: firstDayOfMonth)
-    var days = (0..<leadingBlankCount).map { index in
-      CalendarDayState.empty(id: "leading-\(index)")
-    }
-
-    days += monthRange.compactMap { day -> CalendarDayState? in
+    var days = monthRange.compactMap { day -> CalendarDayState? in
       guard let date = calendar.date(byAdding: .day, value: day - 1, to: firstDayOfMonth) else {
         return nil
       }
@@ -197,11 +199,6 @@ final class JournalHomeViewModel {
 
   private func updateEntryDayCache() {
     entryDaysWithEntries = Set(entries.map { calendar.startOfDay(for: $0.createdAt) })
-  }
-
-  private func leadingBlankCount(for firstDayOfMonth: Date) -> Int {
-    let weekday = calendar.component(.weekday, from: firstDayOfMonth)
-    return (weekday - calendar.firstWeekday + 7) % 7
   }
 
   private static func startOfMonth(for date: Date, calendar: Calendar) -> Date {
