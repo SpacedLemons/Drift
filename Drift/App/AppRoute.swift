@@ -12,3 +12,9 @@ enum AppRoute: Hashable {
   case editJournalEntry(UUID)
   case capture(CaptureRoute)
 }
+
+enum AppFullScreenRoute: String, Identifiable, Hashable {
+  case driftPlus
+
+  var id: String { rawValue }
+}

@@ -37,7 +37,8 @@ final class CaptureCoordinator {
       journalRepository: dependencies.journalRepository,
       audioPlaybackService: dependencies.audioPlaybackService,
       imageAttachmentService: dependencies.imageAttachmentService,
-      customThemeService: dependencies.customThemeService
+      customThemeService: dependencies.customThemeService,
+      dailyEntryLimitService: dependencies.dailyEntryLimitService
     )
   }
 

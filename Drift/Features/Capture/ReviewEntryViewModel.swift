@@ -22,6 +22,8 @@ final class ReviewEntryViewModel {
   @ObservationIgnored
   private let customThemeService: any CustomThemeService
   @ObservationIgnored
+  private let dailyEntryLimitService: any DailyEntryLimitService
+  @ObservationIgnored
   private let fileManager: FileManager
   @ObservationIgnored
   private var playbackTimerTask: Task<Void, Never>?
@@ -52,6 +54,7 @@ final class ReviewEntryViewModel {
     audioPlaybackService: any AudioPlaybackService = PreviewAudioPlaybackService(),
     imageAttachmentService: any ImageAttachmentService = PreviewImageAttachmentService(),
     customThemeService: any CustomThemeService = PreviewCustomThemeService(),
+    dailyEntryLimitService: any DailyEntryLimitService = PreviewDailyEntryLimitService(),
     fileManager: FileManager = .default
   ) {
     self.draft = draft
@@ -59,6 +62,7 @@ final class ReviewEntryViewModel {
     self.audioPlaybackService = audioPlaybackService
     self.imageAttachmentService = imageAttachmentService
     self.customThemeService = customThemeService
+    self.dailyEntryLimitService = dailyEntryLimitService
     self.fileManager = fileManager
     transcript = draft.transcript
     selectedMood = draft.suggestedMood
@@ -256,6 +260,19 @@ final class ReviewEntryViewModel {
 
     isSaving = true
     errorMessage = nil
+
+    do {
+      let limitResult = try await dailyEntryLimitService.evaluateNewEntryAccess(on: draft.createdAt)
+      guard limitResult.canCreateEntry else {
+        isSaving = false
+        errorMessage = limitResult.message
+        return nil
+      }
+    } catch {
+      isSaving = false
+      errorMessage = DailyEntryLimitError.calculationFailed.localizedDescription
+      return nil
+    }
 
     let entry = JournalEntry(
       id: draft.id,

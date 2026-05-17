@@ -16,6 +16,7 @@ struct AppDependencyContainer: Sendable {
   let reminderService: any ReminderService & Sendable
   let aiJournalAnalysisService: any AIJournalAnalysisService & Sendable
   let subscriptionService: any SubscriptionService & Sendable
+  let dailyEntryLimitService: any DailyEntryLimitService & Sendable
   let customisationService: any CustomisationService & Sendable
   let customThemeService: any CustomThemeService & Sendable
   let imageAttachmentService: any ImageAttachmentService & Sendable
@@ -32,6 +33,7 @@ struct AppDependencyContainer: Sendable {
       reminderService: UnavailableReminderService(),
       aiJournalAnalysisService: DisabledAIJournalAnalysisService(),
       subscriptionService: DisabledSubscriptionService(),
+      dailyEntryLimitService: PreviewDailyEntryLimitService(),
       customisationService: LocalCustomisationService(),
       customThemeService: LocalCustomThemeService(),
       imageAttachmentService: LocalImageAttachmentService(),
@@ -41,15 +43,44 @@ struct AppDependencyContainer: Sendable {
   }
 
   static func live(modelContainer: ModelContainer) -> AppDependencyContainer {
-    AppDependencyContainer(
-      journalRepository: SwiftDataJournalRepository(modelContainer: modelContainer),
+    let journalRepository = SwiftDataJournalRepository(modelContainer: modelContainer)
+    let storeKitSubscriptionService = StoreKitSubscriptionService()
+
+    #if DEBUG
+      let debugOverrideStore = DebugEntitlementOverrideStore()
+      let subscriptionService = DebugSubscriptionService(
+        baseService: storeKitSubscriptionService,
+        overrideStore: debugOverrideStore
+      )
+    #else
+      let subscriptionService = storeKitSubscriptionService
+    #endif
+
+    let localDailyEntryLimitService = LocalDailyEntryLimitService(
+      journalRepository: journalRepository,
+      subscriptionService: subscriptionService
+    )
+
+    #if DEBUG
+      let dailyEntryLimitService = DebugDailyEntryLimitService(
+        baseService: localDailyEntryLimitService,
+        subscriptionService: subscriptionService,
+        overrideStore: debugOverrideStore
+      )
+    #else
+      let dailyEntryLimitService = localDailyEntryLimitService
+    #endif
+
+      return AppDependencyContainer(
+      journalRepository: journalRepository,
       audioRecordingService: AVAudioRecordingService(),
       audioPlaybackService: AVAudioPlaybackService(),
       transcriptionService: AppleSpeechTranscriptionService(),
       moodAnalysisService: LocalMoodAnalysisService(),
       reminderService: LocalNotificationReminderService(),
       aiJournalAnalysisService: DisabledAIJournalAnalysisService(),
-      subscriptionService: DisabledSubscriptionService(),
+      subscriptionService: subscriptionService,
+      dailyEntryLimitService: dailyEntryLimitService,
       customisationService: LocalCustomisationService(),
       customThemeService: LocalCustomThemeService(),
       imageAttachmentService: LocalImageAttachmentService(),

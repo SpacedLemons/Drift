@@ -33,3 +33,19 @@ func fixtureDate(
     )
   ) ?? Date(timeIntervalSince1970: 0)
 }
+
+func testJournalEntry(
+  id: UUID = UUID(),
+  createdAt: Date,
+  title: String = "Test entry"
+) -> JournalEntry {
+  JournalEntry(
+    id: id,
+    createdAt: createdAt,
+    transcript: title,
+    title: title,
+    mood: .neutral,
+    themes: [],
+    tags: []
+  )
+}

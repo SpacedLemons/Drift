@@ -18,6 +18,7 @@ struct AppShellView: View {
   @State private var selectedTab: AppTab = .journal
   @State private var journalReloadToken = UUID()
   @State private var insightsReloadToken = UUID()
+  @State private var entryLimitAlert: EntryLimitAlert?
 
   init(
     environment: AppEnvironment,
@@ -48,7 +49,11 @@ struct AppShellView: View {
           viewModel: journalHomeViewModel,
           reloadToken: journalReloadToken,
           onEntrySelected: coordinator.showJournalEntry,
-          onRecordTapped: coordinator.startCapture
+          onRecordTapped: {
+            requestNewEntry {
+              coordinator.startCapture()
+            }
+          }
         )
         .navigationDestination(for: AppRoute.self) { route in
           switch route {
@@ -116,6 +121,9 @@ struct AppShellView: View {
             guideService: environment.dependencies.guideService
           ),
           coordinator: settingsCoordinator,
+          onShowPaywall: {
+            coordinator.showDriftPlusPaywall()
+          },
           onEntriesDeleted: refreshJournalData
         )
         .navigationDestination(for: SettingsRoute.self) { route in
@@ -152,6 +160,42 @@ struct AppShellView: View {
     } message: {
       Text(launchActionStore.routingErrorMessage ?? "")
     }
+    .alert(
+      "Entry Limit",
+      isPresented: Binding(
+        get: { entryLimitAlert != nil },
+        set: { if !$0 { entryLimitAlert = nil } }
+      )
+    ) {
+      Button(
+        role: .cancel,
+        action: {
+          entryLimitAlert = nil
+        },
+        label: {
+          Text("OK")
+        }
+      )
+    } message: {
+      Text(entryLimitAlert?.message ?? "")
+    }
+    .fullScreenCover(
+      item: $bindableCoordinator.fullScreenRoute,
+      onDismiss: {
+        coordinator.dismissFullScreenRoute()
+      },
+      content: { route in
+        switch route {
+        case .driftPlus:
+          DriftPlusPaywallView(
+            viewModel: DriftPlusPaywallViewModel(
+              subscriptionService: environment.dependencies.subscriptionService,
+              reasonMessage: coordinator.paywallReasonMessage
+            )
+          )
+        }
+      }
+    )
   }
 
   @ViewBuilder
@@ -190,7 +234,11 @@ struct AppShellView: View {
       ProcessingView(
         viewModel: captureCoordinator.makeProcessingViewModel(recordingResult: result),
         onCancel: coordinator.backToJournal,
-        onRecordAgain: coordinator.addAnotherEntry,
+        onRecordAgain: {
+          requestNewEntry {
+            coordinator.addAnotherEntry()
+          }
+        },
         onPrepared: coordinator.showReview
       )
     case .review(let draft):
@@ -211,7 +259,9 @@ struct AppShellView: View {
         },
         onAddAnother: {
           refreshJournalData()
-          coordinator.addAnotherEntry()
+          requestNewEntry {
+            coordinator.addAnotherEntry()
+          }
         },
         onBackToJournal: {
           refreshJournalData()
@@ -233,12 +283,58 @@ struct AppShellView: View {
     switch action {
     case .startJournalEntry:
       selectedTab = .journal
-      guard coordinator.startCaptureFromReminder() else {
-        launchActionStore.reportRoutingError()
-        return
+      requestNewEntry {
+        guard coordinator.startCaptureFromReminder() else {
+          launchActionStore.reportRoutingError()
+          return
+        }
       }
     }
   }
+
+  private func requestNewEntry(onAllowed: @escaping @MainActor () -> Void) {
+    Task {
+      await openNewEntryIfAllowed(onAllowed: onAllowed)
+    }
+  }
+
+  @MainActor
+  private func openNewEntryIfAllowed(onAllowed: @escaping @MainActor () -> Void) async {
+    do {
+      let result = try await environment.dependencies.dailyEntryLimitService
+        .evaluateNewEntryAccess()
+
+      guard result.canCreateEntry else {
+        showEntryLimit(result)
+        return
+      }
+
+      onAllowed()
+    } catch let error as DailyEntryLimitError {
+      entryLimitAlert = EntryLimitAlert(
+        message: error.localizedDescription
+      )
+    } catch {
+      entryLimitAlert = EntryLimitAlert(
+        message: DailyEntryLimitError.calculationFailed.localizedDescription
+      )
+    }
+  }
+
+  private func showEntryLimit(_ result: DailyEntryLimitResult) {
+    if result.shouldOfferUpgrade {
+      coordinator.showDriftPlusPaywall(reasonMessage: result.message)
+    } else {
+      entryLimitAlert = EntryLimitAlert(
+        message: result.message
+      )
+    }
+  }
+}
+
+private struct EntryLimitAlert: Identifiable, Equatable {
+  let id = UUID()
+  let message: String
 }
 
 #Preview {

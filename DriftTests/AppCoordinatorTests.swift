@@ -100,6 +100,18 @@ struct AppCoordinatorTests {
     #expect(coordinator.startCaptureFromReminder())
     #expect(coordinator.path == [.capture(.recording)])
   }
+
+  @Test
+  func fullScreenPaywallRouteAppearsForLimitUpgradePrompt() {
+    let coordinator = AppCoordinator()
+    let message =
+      "You've used today's 10 free entries. Come back tomorrow or upgrade for more daily entries."
+
+    coordinator.showDriftPlusPaywall(reasonMessage: message)
+
+    #expect(coordinator.fullScreenRoute == .driftPlus)
+    #expect(coordinator.paywallReasonMessage == message)
+  }
 }
 
 @MainActor

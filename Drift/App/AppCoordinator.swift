@@ -12,6 +12,8 @@ import Observation
 @Observable
 final class AppCoordinator {
   var path: [AppRoute] = []
+  var fullScreenRoute: AppFullScreenRoute?
+  var paywallReasonMessage: String?
 
   func showJournalEntry(_ entry: JournalEntry) {
     showJournalEntry(entry.id)
@@ -65,5 +67,15 @@ final class AppCoordinator {
 
   func backToJournal() {
     path.removeAll()
+  }
+
+  func showDriftPlusPaywall(reasonMessage: String? = nil) {
+    paywallReasonMessage = reasonMessage
+    fullScreenRoute = .driftPlus
+  }
+
+  func dismissFullScreenRoute() {
+    fullScreenRoute = nil
+    paywallReasonMessage = nil
   }
 }

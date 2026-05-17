@@ -18,6 +18,7 @@ extension AppDependencyContainer {
       reminderService: PreviewReminderService(),
       aiJournalAnalysisService: DisabledAIJournalAnalysisService(),
       subscriptionService: DisabledSubscriptionService(),
+      dailyEntryLimitService: PreviewDailyEntryLimitService(),
       customisationService: LocalCustomisationService(),
       customThemeService: PreviewCustomThemeService(),
       imageAttachmentService: PreviewImageAttachmentService(),

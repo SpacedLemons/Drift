@@ -164,6 +164,32 @@ struct ReviewEntryViewModelTests {
     #expect(!viewModel.isSaving)
   }
 
+  @Test
+  func saveBlocksManualFallbackWhenDailyEntryLimitIsReached() async throws {
+    let repository = MockJournalRepository()
+    let limitService = DailyEntryLimitServiceStub(
+      result: .blocked(
+        entitlement: .free,
+        entriesCreatedToday: SubscriptionTier.free.dailyEntryLimit
+      )
+    )
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: repository,
+      dailyEntryLimitService: limitService
+    )
+
+    let entry = await viewModel.save()
+
+    #expect(entry == nil)
+    #expect(
+      viewModel.errorMessage
+        == "You've used today's 10 free entries. Come back tomorrow or upgrade for more daily entries."
+    )
+    verify(repository)
+      .saveEntry(.any).called(.never)
+  }
+
   private func makeDraft(
     audioURL: URL = URL(fileURLWithPath: "/tmp/drift-review-test.m4a"),
     transcript: String = "A focused voice entry.",

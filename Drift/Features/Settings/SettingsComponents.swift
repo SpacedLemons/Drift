@@ -259,7 +259,7 @@ struct SettingsInfoCard: View {
   }
 }
 
-private struct SettingsIcon: View {
+struct SettingsIcon: View {
   let symbol: String
   var tint: Color = AppColors.accent
 

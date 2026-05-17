@@ -1,0 +1,70 @@
+{
+  "identifier": "F3F4ED74-502C-48D1-BF77-8E4E08C99C69",
+  "nonRenewingSubscriptions": [],
+  "products": [],
+  "settings": {
+    "_applicationInternalID": "0",
+    "_failTransactionsEnabled": false,
+    "_locale": "en_GB",
+    "_storefront": "GBR"
+  },
+  "subscriptionGroups": [
+    {
+      "id": "B126C65D-3596-449D-AB5E-85BC9A0E6132",
+      "localizations": [
+        {
+          "description": "Drift Plus subscriptions",
+          "displayName": "Drift Plus",
+          "locale": "en_GB"
+        }
+      ],
+      "name": "Drift Plus",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "3.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "8B333685-72C6-48EE-AF58-23833AE42A1F",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Up to 100 entries per day.",
+              "displayName": "Monthly Plus",
+              "locale": "en_GB"
+            }
+          ],
+          "productID": "drift.plus.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Monthly Plus",
+          "subscriptionGroupID": "B126C65D-3596-449D-AB5E-85BC9A0E6132"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "29.99",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "92162E8A-3439-4A13-B741-7B606E1E0D28",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Up to 100 entries per day.",
+              "displayName": "Yearly Plus",
+              "locale": "en_GB"
+            }
+          ],
+          "productID": "drift.plus.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Yearly Plus",
+          "subscriptionGroupID": "B126C65D-3596-449D-AB5E-85BC9A0E6132"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

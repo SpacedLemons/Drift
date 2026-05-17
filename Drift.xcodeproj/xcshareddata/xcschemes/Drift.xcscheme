@@ -72,6 +72,9 @@
             ReferencedContainer = "container:Drift.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "container:Drift/Configuration/DriftPlus.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

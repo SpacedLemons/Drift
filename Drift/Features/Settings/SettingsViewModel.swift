@@ -23,6 +23,10 @@ final class SettingsViewModel {
   private let imageAttachmentService: any ImageAttachmentService & Sendable
   @ObservationIgnored
   let guideService: any GuideService & Sendable
+  #if DEBUG
+    @ObservationIgnored
+    private let debugEntitlementOverrideStore = DebugEntitlementOverrideStore()
+  #endif
   @ObservationIgnored
   private let now: () -> Date
 
@@ -33,6 +37,9 @@ final class SettingsViewModel {
   private(set) var voiceRecognitionValue = "Checking"
   private(set) var speechPermissionStatus: PermissionStatus = .unknown
   private(set) var entitlement: SubscriptionEntitlement = .free
+  #if DEBUG
+    private(set) var debugEntitlementSettings: DebugEntitlementOverrideSettings = .default
+  #endif
   private(set) var isDeletingAllEntries = false
   private(set) var isExportingEntries = false
   private(set) var isGuideDismissed = false
@@ -77,6 +84,9 @@ final class SettingsViewModel {
       : "Apple Speech fallback"
     speechPermissionStatus = await transcriptionService.currentPermissionStatus()
     isGuideDismissed = await guideService.isGuideDismissed()
+    #if DEBUG
+      debugEntitlementSettings = await debugEntitlementOverrideStore.loadSettings()
+    #endif
 
     do {
       entitlement = try await subscriptionService.currentEntitlement()
@@ -136,4 +146,26 @@ final class SettingsViewModel {
   func clearError() {
     errorMessage = nil
   }
+
+  #if DEBUG
+    func setDebugEntitlementMode(_ mode: DebugEntitlementMode) async {
+      await debugEntitlementOverrideStore.saveMode(mode)
+      await load()
+    }
+
+    func setSimulateFreeEntryLimitReached(_ isEnabled: Bool) async {
+      await debugEntitlementOverrideStore.saveSimulateFreeEntryLimitReached(isEnabled)
+      await load()
+    }
+
+    func setSimulatePlusEntryLimitReached(_ isEnabled: Bool) async {
+      await debugEntitlementOverrideStore.saveSimulatePlusEntryLimitReached(isEnabled)
+      await load()
+    }
+
+    func resetGuideState() async {
+      await guideService.setGuideDismissed(false)
+      await load()
+    }
+  #endif
 }

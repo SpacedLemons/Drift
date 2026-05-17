@@ -18,7 +18,7 @@ Drift is a private voice journal for iOS. It lets you record a short entry, tran
 - AVFoundation
 - Speech framework
 - UserNotifications
-- StoreKit 2 placeholders
+- StoreKit 2 subscription support
 - Swift Testing
 - Mockable
 - Swift Package Manager
@@ -28,6 +28,8 @@ Drift is a private voice journal for iOS. It lets you record a short entry, tran
 Open `Drift.xcodeproj` in Xcode, select the `Drift` scheme, choose a simulator or physical device, then run from Xcode.
 
 Real-device testing is recommended for microphone recording, Apple Speech transcription, notification permission, and reminder actions.
+
+The `Drift` scheme uses the local StoreKit configuration at `Drift/Configuration/DriftPlus.storekit` for development subscription testing. DEBUG builds include Settings developer controls for forcing Free/Plus and daily-limit states locally; those controls are not compiled into Release builds.
 
 ## Running Tests
 
@@ -40,7 +42,7 @@ xcodebuild -project Drift.xcodeproj -scheme Drift -destination 'platform=iOS Sim
 ## Current MVP Limitations
 
 - AI reflections are not active yet.
-- Paywall and subscription behaviour are placeholders only.
+- Drift Plus paid-feature foundations are present, but the actual future paid features are not active yet.
 - Cloud sync is not implemented.
 - Transcription depends on Apple Speech availability and may vary by device, language, and iOS support.
 - Audio and notification flows should be verified on a real device before TestFlight dogfooding.
@@ -48,3 +50,5 @@ xcodebuild -project Drift.xcodeproj -scheme Drift -destination 'platform=iOS Sim
 ## Internal Dogfooding
 
 Use `../Docs/TestFlightNotes.md` for the current dogfooding checklist, known limitations, and privacy notes.
+
+Use `../Docs/StoreKitTesting.md` for local StoreKit and entitlement override testing notes.

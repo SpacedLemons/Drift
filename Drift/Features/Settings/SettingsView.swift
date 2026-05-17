@@ -11,6 +11,7 @@ import UIKit
 struct SettingsView: View {
   @State private var viewModel: SettingsViewModel
   let coordinator: SettingsCoordinator
+  let onShowPaywall: () -> Void
   let onEntriesDeleted: () -> Void
 
   @State private var isShowingDeleteAllConfirmation = false
@@ -19,10 +20,12 @@ struct SettingsView: View {
   init(
     viewModel: SettingsViewModel,
     coordinator: SettingsCoordinator,
+    onShowPaywall: @escaping () -> Void = {},
     onEntriesDeleted: @escaping () -> Void
   ) {
     _viewModel = State(initialValue: viewModel)
     self.coordinator = coordinator
+    self.onShowPaywall = onShowPaywall
     self.onEntriesDeleted = onEntriesDeleted
   }
 
@@ -94,11 +97,6 @@ struct SettingsView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Settings")
-        .font(AppTypography.appTitle)
-        .foregroundStyle(AppColors.textPrimary)
-        .accessibilityAddTraits(.isHeader)
-
       Text("Local preferences for reminders, appearance, privacy, and data.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
@@ -108,6 +106,16 @@ struct SettingsView: View {
 
   private var settingsSections: some View {
     VStack(alignment: .leading, spacing: AppSpacing.l) {
+      SettingsSectionCard(title: "Drift Plus") {
+        SettingsNavigationRow(
+          icon: AppIcons.sparkles,
+          title: viewModel.entitlement.isPremium ? "Drift Plus active" : "Upgrade to Drift Plus",
+          subtitle: "Existing entries always stay yours.",
+          trailingValue: viewModel.entitlement.tier.displayName,
+          action: onShowPaywall
+        )
+      }
+
       SettingsSectionCard(title: "Reminders") {
         SettingsNavigationRow(
           icon: AppIcons.bell,
@@ -233,8 +241,96 @@ struct SettingsView: View {
         )
         .accessibilityLabel("About Drift")
       }
+
+      #if DEBUG
+        developerSettingsSection
+      #endif
     }
   }
+
+  #if DEBUG
+    private var developerSettingsSection: some View {
+      SettingsSectionCard(title: "Developer Settings") {
+        VStack(alignment: .leading, spacing: AppSpacing.s) {
+          HStack(spacing: AppSpacing.m) {
+            SettingsIcon(symbol: AppIcons.settings)
+
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+              Text("Entitlement Mode")
+                .font(AppTypography.bodyEmphasis)
+                .foregroundStyle(AppColors.textPrimary)
+
+              Picker(
+                "Entitlement Mode",
+                selection: Binding(
+                  get: { viewModel.debugEntitlementSettings.mode },
+                  set: { mode in
+                    Task { await viewModel.setDebugEntitlementMode(mode) }
+                  }
+                )
+              ) {
+                ForEach(DebugEntitlementMode.allCases) { mode in
+                  Text(mode.displayName)
+                    .tag(mode)
+                }
+              }
+              .pickerStyle(.menu)
+              .tint(AppColors.accent)
+            }
+          }
+          .padding(AppSpacing.m)
+
+          Divider().overlay(AppColors.border)
+
+          SettingsToggleRow(
+            icon: AppIcons.warning,
+            title: "Simulate free entry limit reached",
+            subtitle: "Blocks new Free entries and opens the Drift Plus paywall.",
+            isOn: Binding(
+              get: { viewModel.debugEntitlementSettings.simulateFreeEntryLimitReached },
+              set: { isEnabled in
+                Task { await viewModel.setSimulateFreeEntryLimitReached(isEnabled) }
+              }
+            )
+          )
+
+          Divider().overlay(AppColors.border)
+
+          SettingsToggleRow(
+            icon: AppIcons.warning,
+            title: "Simulate Plus entry limit reached",
+            subtitle: "Blocks new Plus entries with the reliability limit message.",
+            isOn: Binding(
+              get: { viewModel.debugEntitlementSettings.simulatePlusEntryLimitReached },
+              set: { isEnabled in
+                Task { await viewModel.setSimulatePlusEntryLimitReached(isEnabled) }
+              }
+            )
+          )
+
+          Divider().overlay(AppColors.border)
+
+          SettingsNavigationRow(
+            icon: AppIcons.question,
+            title: "Reset guide state",
+            subtitle: "Shows the guide as new again on this device.",
+            action: {
+              Task { await viewModel.resetGuideState() }
+            }
+          )
+
+          Divider().overlay(AppColors.border)
+
+          SettingsDestructiveRow(
+            icon: AppIcons.trash,
+            title: "Clear local data",
+            subtitle: "Uses the same delete confirmation as the Data section.",
+            action: showDeleteAllConfirmation
+          )
+        }
+      }
+    }
+  #endif
 
   private func showDeleteAllConfirmation() {
     isShowingDeleteAllConfirmation = true
@@ -283,6 +379,7 @@ private struct ActivityView: UIViewControllerRepresentable {
         guideService: PreviewGuideService()
       ),
       coordinator: SettingsCoordinator(),
+      onShowPaywall: {},
       onEntriesDeleted: {}
     )
   }
