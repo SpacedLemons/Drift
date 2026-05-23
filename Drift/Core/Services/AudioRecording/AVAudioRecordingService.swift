@@ -77,6 +77,17 @@ final class AVAudioRecordingService: NSObject, AudioRecordingService, AVAudioRec
     try await requestPermissionIfNeeded()
   }
 
+  func currentPermissionStatus() async -> PermissionStatus {
+    await perform {
+      switch AVAudioApplication.shared.recordPermission {
+      case .granted: .granted
+      case .denied: .denied
+      case .undetermined: .unknown
+      @unknown default: .restricted
+      }
+    }
+  }
+
   func startRecording() async throws {
     try await requestPermissionIfNeeded()
     try await perform {

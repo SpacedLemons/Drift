@@ -114,11 +114,9 @@ struct AppShellView: View {
         SettingsView(
           viewModel: SettingsViewModel(
             journalRepository: environment.dependencies.journalRepository,
-            transcriptionService: environment.dependencies.transcriptionService,
             subscriptionService: environment.dependencies.subscriptionService,
             exportService: environment.dependencies.exportService,
-            imageAttachmentService: environment.dependencies.imageAttachmentService,
-            guideService: environment.dependencies.guideService
+            imageAttachmentService: environment.dependencies.imageAttachmentService
           ),
           coordinator: settingsCoordinator,
           onShowPaywall: {
@@ -207,11 +205,24 @@ struct AppShellView: View {
           reminderService: environment.dependencies.reminderService
         )
       )
+    case .voiceTranscription:
+      VoiceTranscriptionSettingsView(
+        viewModel: VoiceTranscriptionSettingsViewModel(
+          transcriptionService: environment.dependencies.transcriptionService,
+          audioRecordingService: environment.dependencies.audioRecordingService
+        )
+      )
     case .appearance:
       AppearanceSettingsView(
         viewModel: AppearanceSettingsViewModel(
           customisationService: environment.dependencies.customisationService,
           subscriptionService: environment.dependencies.subscriptionService
+        )
+      )
+    case .backupRestore:
+      BackupSettingsView(
+        viewModel: BackupSettingsViewModel(
+          backupService: environment.dependencies.backupService
         )
       )
     case .privacy:

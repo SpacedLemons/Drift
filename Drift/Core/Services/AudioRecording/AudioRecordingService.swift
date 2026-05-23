@@ -12,6 +12,7 @@ import Mockable
 protocol AudioRecordingService {
   var recordingState: RecordingState { get }
 
+  func currentPermissionStatus() async -> PermissionStatus
   func requestPermission() async throws
   func startRecording() async throws
   func pauseRecording() async throws

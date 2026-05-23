@@ -16,8 +16,16 @@ final class SettingsCoordinator {
     path.append(.reminders)
   }
 
+  func showVoiceTranscription() {
+    path.append(.voiceTranscription)
+  }
+
   func showAppearance() {
     path.append(.appearance)
+  }
+
+  func showBackupRestore() {
+    path.append(.backupRestore)
   }
 
   func showPrivacy() {

@@ -22,6 +22,7 @@ struct AppDependencyContainer: Sendable {
   let imageAttachmentService: any ImageAttachmentService & Sendable
   let guideService: any GuideService & Sendable
   let exportService: any ExportService & Sendable
+  let backupService: any BackupService & Sendable
 
   static func unavailable() -> AppDependencyContainer {
     AppDependencyContainer(
@@ -38,7 +39,8 @@ struct AppDependencyContainer: Sendable {
       customThemeService: LocalCustomThemeService(),
       imageAttachmentService: LocalImageAttachmentService(),
       guideService: LocalGuideService(),
-      exportService: LocalMarkdownExportService()
+      exportService: LocalMarkdownExportService(),
+      backupService: PlaceholderBackupService()
     )
   }
 
@@ -71,7 +73,7 @@ struct AppDependencyContainer: Sendable {
       let dailyEntryLimitService = localDailyEntryLimitService
     #endif
 
-      return AppDependencyContainer(
+    return AppDependencyContainer(
       journalRepository: journalRepository,
       audioRecordingService: AVAudioRecordingService(),
       audioPlaybackService: AVAudioPlaybackService(),
@@ -85,7 +87,8 @@ struct AppDependencyContainer: Sendable {
       customThemeService: LocalCustomThemeService(),
       imageAttachmentService: LocalImageAttachmentService(),
       guideService: LocalGuideService(),
-      exportService: LocalMarkdownExportService()
+      exportService: LocalMarkdownExportService(),
+      backupService: PlaceholderBackupService()
     )
   }
 }

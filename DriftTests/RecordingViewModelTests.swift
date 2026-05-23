@@ -369,6 +369,10 @@ private final class DelayedStopAudioRecordingService: AudioRecordingService, @un
 
   func requestPermission() async throws {}
 
+  func currentPermissionStatus() async -> PermissionStatus {
+    .granted
+  }
+
   func startRecording() async throws {}
 
   func pauseRecording() async throws {}
@@ -422,6 +426,10 @@ private final class DelayedCancelAudioRecordingService: AudioRecordingService, @
 
   func requestPermission() async throws {}
 
+  func currentPermissionStatus() async -> PermissionStatus {
+    .granted
+  }
+
   func startRecording() async throws {}
 
   func pauseRecording() async throws {}
@@ -469,6 +477,10 @@ private final class DelayedAudioRecordingService: AudioRecordingService, @unchec
   }
 
   func requestPermission() async throws {}
+
+  func currentPermissionStatus() async -> PermissionStatus {
+    .granted
+  }
 
   func startRecording() async throws {
     await withCheckedContinuation { continuation in

@@ -15,7 +15,6 @@ struct SettingsView: View {
   let onEntriesDeleted: () -> Void
 
   @State private var isShowingDeleteAllConfirmation = false
-  @State private var isShowingGuide = false
 
   init(
     viewModel: SettingsViewModel,
@@ -55,43 +54,24 @@ struct SettingsView: View {
       "Delete all entries?",
       isPresented: $isShowingDeleteAllConfirmation
     ) {
-      Button(
-        role: .destructive,
-        action: {
-          deleteAllEntries()
-        },
-        label: {
-          Text("Delete All Entries")
-        }
-      )
+      Button(role: .destructive) {
+        deleteAllEntries()
+      } label: {
+        Text("Delete All Entries")
+      }
 
-      Button(
-        role: .cancel,
-        action: {},
-        label: {
-          Text("Cancel")
-        }
-      )
+      Button(role: .cancel) {
+      } label: {
+        Text("Cancel")
+      }
     } message: {
       Text("This will remove your journal entries from this device.")
     }
     .sheet(item: $bindableViewModel.exportShareItem) { exportItem in
       ActivityView(activityItems: [exportItem.url])
     }
-    .sheet(isPresented: $isShowingGuide) {
-      GuideAnnotationsView(
-        viewModel: GuideViewModel(guideService: viewModel.guideService)
-      )
-    }
     .task {
       await viewModel.load()
-    }
-    .onChange(of: isShowingGuide) { _, isShowing in
-      guard !isShowing else { return }
-
-      Task {
-        await viewModel.load()
-      }
     }
   }
 
@@ -117,86 +97,19 @@ struct SettingsView: View {
       }
 
       SettingsSectionCard(title: "Reminders") {
-        SettingsNavigationRow(
-          icon: AppIcons.bell,
-          title: "Reminder Settings",
-          subtitle: "Local journal nudges",
-          trailingValue: "Local",
-          action: coordinator.showReminders
-        )
+        settingsNavigationRow(for: .reminders, action: coordinator.showReminders)
       }
 
       SettingsSectionCard(title: "Voice & Transcription") {
-        SettingsRow(
-          icon: AppIcons.waveform,
-          title: "Voice recognition",
-          subtitle:
-            "Drift prefers on-device transcription where available. Some system transcription features may require network access depending on device, language, and iOS support.",
-          trailingValue: viewModel.voiceRecognitionValue
-        )
-
-        Divider().overlay(AppColors.border)
-
-        SettingsRow(
-          icon: AppIcons.lockShield,
-          title: "Speech permission",
-          subtitle: "Drift uses speech recognition to turn your voice journal entries into text.",
-          trailingValue: viewModel.speechPermissionStatusText
-        )
-
-        if viewModel.shouldShowSpeechSettingsLink {
-          SystemSettingsLink()
-            .padding(.horizontal, AppSpacing.m)
-            .padding(.bottom, AppSpacing.m)
-        }
-
-        Divider().overlay(AppColors.border)
-
-        SettingsRow(
-          icon: AppIcons.book,
-          title: "Language",
-          subtitle: "Uses the current system language for now.",
-          trailingValue: "System"
-        )
-
-        Divider().overlay(AppColors.border)
-
-        SettingsRow(
-          icon: AppIcons.pencil,
-          title: "Transcript cleanup",
-          subtitle: "Additional cleanup controls will arrive later.",
-          trailingValue: "Later"
-        )
-
-        Divider().overlay(AppColors.border)
-
-        SettingsRow(
-          icon: AppIcons.externalDrive,
-          title: "Keep audio recording",
-          subtitle:
-            "Future preference. Temporary audio is discarded after transcription in the MVP.",
-          trailingValue: "Later"
-        )
+        settingsNavigationRow(for: .voiceTranscription, action: coordinator.showVoiceTranscription)
       }
 
       SettingsSectionCard(title: "Appearance") {
-        SettingsNavigationRow(
-          icon: AppIcons.paintPalette,
-          title: "Appearance",
-          subtitle: "Mode, accent colour, and layout density",
-          action: coordinator.showAppearance
-        )
+        settingsNavigationRow(for: .appearance, action: coordinator.showAppearance)
       }
 
-      SettingsSectionCard(title: "Guide") {
-        SettingsNavigationRow(
-          icon: AppIcons.question,
-          title: "Drift Guide",
-          subtitle: "Lightweight notes for recording, reviewing, images, calendar, and privacy",
-          trailingValue: viewModel.isGuideDismissed ? "Dismissed" : "New",
-          action: showGuide
-        )
-        .accessibilityLabel("Drift guide")
+      SettingsSectionCard(title: "Backup & Restore") {
+        settingsNavigationRow(for: .backupRestore, action: coordinator.showBackupRestore)
       }
 
       SettingsSectionCard(title: "Data") {
@@ -223,29 +136,34 @@ struct SettingsView: View {
       }
 
       SettingsSectionCard(title: "Privacy") {
-        SettingsNavigationRow(
-          icon: AppIcons.lockShield,
-          title: "Privacy",
-          subtitle: "Device storage, transcription, and future AI",
-          action: coordinator.showPrivacy
-        )
-        .accessibilityLabel("Privacy settings")
+        settingsNavigationRow(for: .privacy, action: coordinator.showPrivacy)
+          .accessibilityLabel("Privacy settings")
       }
 
       SettingsSectionCard(title: "About") {
-        SettingsNavigationRow(
-          icon: AppIcons.info,
-          title: "About Drift",
-          subtitle: "Version, privacy notes, and support",
-          action: coordinator.showAbout
-        )
-        .accessibilityLabel("About Drift")
+        settingsNavigationRow(for: .about, action: coordinator.showAbout)
+          .accessibilityLabel("About Drift")
       }
 
       #if DEBUG
         developerSettingsSection
       #endif
     }
+  }
+
+  private func settingsNavigationRow(
+    for route: SettingsRoute,
+    action: @escaping () -> Void
+  ) -> some View {
+    let row = viewModel.navigationRow(for: route)
+
+    return SettingsNavigationRow(
+      icon: row.icon,
+      title: row.title,
+      subtitle: row.subtitle,
+      trailingValue: row.trailingValue,
+      action: action
+    )
   }
 
   #if DEBUG
@@ -310,17 +228,6 @@ struct SettingsView: View {
 
           Divider().overlay(AppColors.border)
 
-          SettingsNavigationRow(
-            icon: AppIcons.question,
-            title: "Reset guide state",
-            subtitle: "Shows the guide as new again on this device.",
-            action: {
-              Task { await viewModel.resetGuideState() }
-            }
-          )
-
-          Divider().overlay(AppColors.border)
-
           SettingsDestructiveRow(
             icon: AppIcons.trash,
             title: "Clear local data",
@@ -349,10 +256,6 @@ struct SettingsView: View {
       await viewModel.exportAllEntries()
     }
   }
-
-  private func showGuide() {
-    isShowingGuide = true
-  }
 }
 
 private struct ActivityView: UIViewControllerRepresentable {
@@ -373,10 +276,8 @@ private struct ActivityView: UIViewControllerRepresentable {
     SettingsView(
       viewModel: SettingsViewModel(
         journalRepository: PreviewJournalRepository(),
-        transcriptionService: PreviewTranscriptionService(),
         subscriptionService: DisabledSubscriptionService(),
-        exportService: LocalMarkdownExportService(),
-        guideService: PreviewGuideService()
+        exportService: LocalMarkdownExportService()
       ),
       coordinator: SettingsCoordinator(),
       onShowPaywall: {},

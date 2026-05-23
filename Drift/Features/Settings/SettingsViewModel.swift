@@ -14,15 +14,11 @@ final class SettingsViewModel {
   @ObservationIgnored
   private let journalRepository: any JournalRepository & Sendable
   @ObservationIgnored
-  private let transcriptionService: any TranscriptionService & Sendable
-  @ObservationIgnored
   private let subscriptionService: any SubscriptionService & Sendable
   @ObservationIgnored
   private let exportService: any ExportService & Sendable
   @ObservationIgnored
   private let imageAttachmentService: any ImageAttachmentService & Sendable
-  @ObservationIgnored
-  let guideService: any GuideService & Sendable
   #if DEBUG
     @ObservationIgnored
     private let debugEntitlementOverrideStore = DebugEntitlementOverrideStore()
@@ -34,56 +30,88 @@ final class SettingsViewModel {
     "Exports are created locally. You choose where to save or share them."
   let emptyExportMessage = "There are no entries to export yet."
 
-  private(set) var voiceRecognitionValue = "Checking"
-  private(set) var speechPermissionStatus: PermissionStatus = .unknown
   private(set) var entitlement: SubscriptionEntitlement = .free
   #if DEBUG
     private(set) var debugEntitlementSettings: DebugEntitlementOverrideSettings = .default
   #endif
   private(set) var isDeletingAllEntries = false
   private(set) var isExportingEntries = false
-  private(set) var isGuideDismissed = false
   private(set) var errorMessage: String?
   var exportShareItem: ExportShareItem?
 
-  var speechPermissionStatusText: String {
-    switch speechPermissionStatus {
-    case .unknown: "Not requested"
-    case .granted: "Allowed"
-    case .denied: "Off"
-    case .restricted: "Restricted"
-    }
+  var navigationRows: [SettingsNavigationRowDescriptor] {
+    [
+      SettingsNavigationRowDescriptor(
+        route: .reminders,
+        icon: AppIcons.bell,
+        title: "Reminder Settings",
+        subtitle: "Local journal nudges",
+        trailingValue: "Local"
+      ),
+      SettingsNavigationRowDescriptor(
+        route: .voiceTranscription,
+        icon: AppIcons.waveform,
+        title: "Voice & Transcription",
+        subtitle: "Recording, transcription, and audio options",
+        trailingValue: nil
+      ),
+      SettingsNavigationRowDescriptor(
+        route: .appearance,
+        icon: AppIcons.paintPalette,
+        title: "Appearance",
+        subtitle: "Mode, accent colour, and layout density",
+        trailingValue: nil
+      ),
+      SettingsNavigationRowDescriptor(
+        route: .backupRestore,
+        icon: AppIcons.externalDrive,
+        title: "Backup & Restore",
+        subtitle: "iCloud backup, restore, and transfer options",
+        trailingValue: nil
+      ),
+      SettingsNavigationRowDescriptor(
+        route: .privacy,
+        icon: AppIcons.lockShield,
+        title: "Privacy",
+        subtitle: "Device storage, transcription, and future AI",
+        trailingValue: nil
+      ),
+      SettingsNavigationRowDescriptor(
+        route: .about,
+        icon: AppIcons.info,
+        title: "About Drift",
+        subtitle: "Version, privacy notes, and support",
+        trailingValue: nil
+      ),
+    ]
   }
 
-  var shouldShowSpeechSettingsLink: Bool {
-    speechPermissionStatus == .denied
+  func navigationRow(for route: SettingsRoute) -> SettingsNavigationRowDescriptor {
+    navigationRows.first { $0.route == route }
+      ?? SettingsNavigationRowDescriptor(
+        route: route,
+        icon: AppIcons.settings,
+        title: "Settings",
+        subtitle: nil,
+        trailingValue: nil
+      )
   }
 
   init(
     journalRepository: any JournalRepository & Sendable,
-    transcriptionService: any TranscriptionService & Sendable,
     subscriptionService: any SubscriptionService & Sendable,
     exportService: any ExportService & Sendable,
     imageAttachmentService: any ImageAttachmentService & Sendable = PreviewImageAttachmentService(),
-    guideService: any GuideService & Sendable = PreviewGuideService(),
     now: @escaping () -> Date = Date.init
   ) {
     self.journalRepository = journalRepository
-    self.transcriptionService = transcriptionService
     self.subscriptionService = subscriptionService
     self.exportService = exportService
     self.imageAttachmentService = imageAttachmentService
-    self.guideService = guideService
     self.now = now
   }
 
   func load() async {
-    voiceRecognitionValue =
-      transcriptionService.supportsOnDeviceTranscription
-      ? "On-device available"
-      : "Apple Speech fallback"
-    speechPermissionStatus = await transcriptionService.currentPermissionStatus()
-    isGuideDismissed = await guideService.isGuideDismissed()
     #if DEBUG
       debugEntitlementSettings = await debugEntitlementOverrideStore.loadSettings()
     #endif
@@ -162,10 +190,15 @@ final class SettingsViewModel {
       await debugEntitlementOverrideStore.saveSimulatePlusEntryLimitReached(isEnabled)
       await load()
     }
-
-    func resetGuideState() async {
-      await guideService.setGuideDismissed(false)
-      await load()
-    }
   #endif
+}
+
+struct SettingsNavigationRowDescriptor: Identifiable, Equatable, Sendable {
+  let route: SettingsRoute
+  let icon: String
+  let title: String
+  let subtitle: String?
+  let trailingValue: String?
+
+  var id: SettingsRoute { route }
 }

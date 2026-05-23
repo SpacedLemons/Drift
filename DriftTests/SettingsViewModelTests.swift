@@ -17,59 +17,46 @@ struct SettingsViewModelTests {
   func loadUsesDefaultLocalSettings() async throws {
     let viewModel = SettingsViewModel(
       journalRepository: MockJournalRepository(),
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: MockExportService()
     )
 
     await viewModel.load()
 
-    #expect(viewModel.voiceRecognitionValue == "On-device available")
     #expect(viewModel.entitlement == .free)
-    #expect(!viewModel.isGuideDismissed)
-    #expect(!viewModel.shouldShowSpeechSettingsLink)
+    #expect(viewModel.errorMessage == nil)
   }
 
   @Test
-  func loadReflectsDismissedGuideState() async throws {
-    let guideService = PreviewGuideService(dismissed: true)
+  func navigationRowsShowVoiceTranscriptionAndBackupRestore() async throws {
     let viewModel = SettingsViewModel(
       journalRepository: MockJournalRepository(),
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
-      subscriptionService: DisabledSubscriptionService(),
-      exportService: MockExportService(),
-      guideService: guideService
-    )
-
-    await viewModel.load()
-
-    #expect(viewModel.isGuideDismissed)
-  }
-
-  @Test
-  func loadShowsSpeechPermissionAndFallbackState() async throws {
-    let viewModel = SettingsViewModel(
-      journalRepository: MockJournalRepository(),
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: false,
-        permissionStatus: .denied
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: MockExportService()
     )
 
-    await viewModel.load()
+    let rows = viewModel.navigationRows
 
-    #expect(viewModel.voiceRecognitionValue == "Apple Speech fallback")
-    #expect(viewModel.speechPermissionStatus == .denied)
-    #expect(viewModel.speechPermissionStatusText == "Off")
-    #expect(viewModel.shouldShowSpeechSettingsLink)
+    #expect(rows.contains { $0.route == .voiceTranscription })
+    #expect(rows.contains { $0.title == "Voice & Transcription" })
+    #expect(rows.contains { $0.subtitle == "Recording, transcription, and audio options" })
+    #expect(rows.contains { $0.route == .backupRestore })
+    #expect(rows.contains { $0.title == "Backup & Restore" })
+    #expect(rows.contains { $0.subtitle == "iCloud backup, restore, and transfer options" })
+  }
+
+  @Test
+  func navigationRowsDoNotIncludeDriftGuide() async throws {
+    let viewModel = SettingsViewModel(
+      journalRepository: MockJournalRepository(),
+      subscriptionService: DisabledSubscriptionService(),
+      exportService: MockExportService()
+    )
+
+    let rows = viewModel.navigationRows
+
+    #expect(!rows.contains { $0.title == "Drift Guide" })
+    #expect(!rows.contains { $0.title == "Guide" })
   }
 
   @Test
@@ -77,10 +64,6 @@ struct SettingsViewModelTests {
     let repository = PreviewJournalRepository(entries: PreviewData.journalEntries)
     let viewModel = SettingsViewModel(
       journalRepository: repository,
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: MockExportService()
     )
@@ -100,10 +83,6 @@ struct SettingsViewModelTests {
       .deleteAllEntries().willThrow(JournalRepositoryError.deleteFailed)
     let viewModel = SettingsViewModel(
       journalRepository: repository,
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: MockExportService()
     )
@@ -120,10 +99,6 @@ struct SettingsViewModelTests {
     let repository = ControlledDeleteJournalRepository()
     let viewModel = SettingsViewModel(
       journalRepository: repository,
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: MockExportService()
     )
@@ -151,10 +126,6 @@ struct SettingsViewModelTests {
       .export(entries: .any, exportedAt: .any).willReturn(exportURL)
     let viewModel = SettingsViewModel(
       journalRepository: repository,
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: exportService,
       now: { exportedAt }
@@ -182,10 +153,6 @@ struct SettingsViewModelTests {
       .export(entries: .any, exportedAt: .any).willThrow(ExportServiceError.writeFailed)
     let viewModel = SettingsViewModel(
       journalRepository: repository,
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: exportService
     )
@@ -206,10 +173,6 @@ struct SettingsViewModelTests {
     let exportService = MockExportService()
     let viewModel = SettingsViewModel(
       journalRepository: repository,
-      transcriptionService: SettingsTranscriptionServiceStub(
-        supportsOnDeviceTranscription: true,
-        permissionStatus: .unknown
-      ),
       subscriptionService: DisabledSubscriptionService(),
       exportService: exportService
     )
@@ -222,21 +185,6 @@ struct SettingsViewModelTests {
     #expect(!viewModel.isExportingEntries)
     verify(exportService)
       .export(entries: .any, exportedAt: .any).called(.never)
-  }
-}
-
-private struct SettingsTranscriptionServiceStub: TranscriptionService, Sendable {
-  let supportsOnDeviceTranscription: Bool
-  let permissionStatus: PermissionStatus
-
-  func currentPermissionStatus() async -> PermissionStatus {
-    permissionStatus
-  }
-
-  func requestPermission() async throws {}
-
-  func transcribe(audioURL: URL) async throws -> String {
-    throw TranscriptionError.transcriptionFailed
   }
 }
 

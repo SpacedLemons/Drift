@@ -23,7 +23,8 @@ extension AppDependencyContainer {
       customThemeService: PreviewCustomThemeService(),
       imageAttachmentService: PreviewImageAttachmentService(),
       guideService: PreviewGuideService(),
-      exportService: LocalMarkdownExportService()
+      exportService: LocalMarkdownExportService(),
+      backupService: PreviewBackupService()
     )
   }
 }

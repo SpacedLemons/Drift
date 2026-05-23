@@ -39,6 +39,8 @@ enum AppIcons {
   static let bell = "bell"
   static let paintPalette = "paintpalette"
   static let externalDrive = "externaldrive"
+  static let iCloudUpload = "icloud.and.arrow.up"
+  static let iCloudDownload = "icloud.and.arrow.down"
   static let info = "info.circle"
   static let notification = "bell.badge"
   static let colorSwatch = "circle.lefthalf.filled"

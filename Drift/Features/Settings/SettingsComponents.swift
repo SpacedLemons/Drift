@@ -54,14 +54,11 @@ struct SettingsNavigationRow: View {
   }
 
   var body: some View {
-    Button(
-      action: {
-        action()
-      },
-      label: {
-        rowContent(chevron: true)
-      }
-    )
+    Button {
+      action()
+    } label: {
+      rowContent(chevron: true)
+    }
     .buttonStyle(.plain)
     .accessibilityLabel(accessibilityText)
   }
@@ -157,6 +154,64 @@ struct SettingsRow: View {
   }
 }
 
+struct SettingsActionRow: View {
+  let icon: String
+  let title: String
+  let subtitle: String?
+  let trailingValue: String?
+  let action: () -> Void
+
+  init(
+    icon: String,
+    title: String,
+    subtitle: String? = nil,
+    trailingValue: String? = nil,
+    action: @escaping () -> Void
+  ) {
+    self.icon = icon
+    self.title = title
+    self.subtitle = subtitle
+    self.trailingValue = trailingValue
+    self.action = action
+  }
+
+  var body: some View {
+    Button {
+      action()
+    } label: {
+      HStack(spacing: AppSpacing.m) {
+        SettingsIcon(symbol: icon)
+
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+          Text(title)
+            .font(AppTypography.bodyEmphasis)
+            .foregroundStyle(AppColors.textPrimary)
+
+          if let subtitle {
+            Text(subtitle)
+              .font(AppTypography.caption)
+              .foregroundStyle(AppColors.textSecondary)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+        }
+
+        Spacer(minLength: AppSpacing.s)
+
+        if let trailingValue {
+          Text(trailingValue)
+            .font(AppTypography.caption)
+            .foregroundStyle(AppColors.textTertiary)
+            .multilineTextAlignment(.trailing)
+        }
+      }
+      .padding(AppSpacing.m)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel([title, subtitle, trailingValue].compactMap { $0 }.joined(separator: ", "))
+  }
+}
+
 struct SettingsToggleRow: View {
   let icon: String
   let title: String
@@ -196,34 +251,30 @@ struct SettingsDestructiveRow: View {
   let action: () -> Void
 
   var body: some View {
-    Button(
-      role: .destructive,
-      action: {
-        action()
-      },
-      label: {
-        HStack(spacing: AppSpacing.m) {
-          SettingsIcon(symbol: icon, tint: AppColors.warmAccent)
+    Button(role: .destructive) {
+      action()
+    } label: {
+      HStack(spacing: AppSpacing.m) {
+        SettingsIcon(symbol: icon, tint: AppColors.warmAccent)
 
-          VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            Text(title)
-              .font(AppTypography.bodyEmphasis)
-              .foregroundStyle(AppColors.warmAccent)
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+          Text(title)
+            .font(AppTypography.bodyEmphasis)
+            .foregroundStyle(AppColors.warmAccent)
 
-            if let subtitle {
-              Text(subtitle)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-            }
+          if let subtitle {
+            Text(subtitle)
+              .font(AppTypography.caption)
+              .foregroundStyle(AppColors.textSecondary)
+              .fixedSize(horizontal: false, vertical: true)
           }
-
-          Spacer()
         }
-        .padding(AppSpacing.m)
-        .contentShape(Rectangle())
+
+        Spacer()
       }
-    )
+      .padding(AppSpacing.m)
+      .contentShape(Rectangle())
+    }
     .buttonStyle(.plain)
     .accessibilityLabel([title, subtitle].compactMap { $0 }.joined(separator: ", "))
   }

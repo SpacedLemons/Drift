@@ -11,6 +11,10 @@ import UserNotifications
 final class PreviewAudioRecordingService: AudioRecordingService, @unchecked Sendable {
   private(set) var recordingState: RecordingState = .idle
 
+  func currentPermissionStatus() async -> PermissionStatus {
+    .granted
+  }
+
   func requestPermission() async throws {}
 
   func startRecording() async throws {

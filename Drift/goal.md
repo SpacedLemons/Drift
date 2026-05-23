@@ -1,670 +1,477 @@
-Follow the README/project brief and continue from the current Drift MVP.
+# Drift Product Reframe Goal
 
-This prompt is only for **free-plan features**.
+Follow the updated README/project brief.
 
-Do not implement paid features.
-Do not implement StoreKit.
-Do not implement paywall.
-Do not implement OpenAI.
-Do not implement AI summaries.
-Do not implement iCloud backup.
+We are beginning the product migration from:
+
+    voice journal
+
+to:
+
+    voice-first personal context board for AI
+
+This goal is the first implementation step of the reframe.
+
+Do not rebuild the whole app.
+
+Do not add MCP.
+Do not add ChatGPT integration.
 Do not add backend/networking.
-Do not add cloud sync.
-Do not add analytics beyond existing Crashlytics if already configured.
+Do not add OpenAI.
+Do not remove existing journal data.
+Do not break the current MVP.
 
-Keep Drift local-first and privacy-first.
-
-Keep the existing architecture and style:
-
-- SwiftUI
-- MVVM-C
-- SwiftData
-- AVFoundation
-- Apple Speech
-- UserNotifications
-- dependency injection
-- Swift Testing
-- Mockable
-- SPM
-
-Keep using compact switch formatting for simple mappings:
-
-    switch value {
-    case .one: resultOne
-    case .two: resultTwo
-    case .three: resultThree
-    }
-
-Avoid verbose `Button(action:label:)` style in new or touched code. Prefer:
-
-    Button {
-      action()
-    } label: {
-      Label("Title", systemImage: "star")
-    }
+The goal is to carefully introduce the new product architecture and terminology while keeping the app functional.
 
 ---
 
-# Goal For This Chunk
+# Core Direction
 
-Implement the next free-feature upgrade pass.
+Drift should become:
 
-Focus on:
+> A voice-first personal context board for AI.
 
-1. Full calendar browsing
-2. Add images to journal entries
-3. Mood graph in Insights
-4. Listen back in Review Entry
-5. Empty/silent recording handling
-6. User-created themes/categories
-7. In-app guide annotations
+Slogan:
 
-Do not add paid gating in this prompt.
+> Let your thoughts Drift.
 
-Everything implemented here should be available in the free version.
+A Drift can be:
 
----
+- thought
+- reflection
+- goal
+- idea
+- memory
+- mood
+- decision
+- task
+- visual
+- context
 
-# 1. Full Calendar Browsing
-
-Improve the current recent-days calendar strip.
-
-Current direction:
-
-- Journal Home currently shows recent days.
-- The user should be able to tap a chevron / calendar control to expand from the recent 7-day strip into a full month calendar.
-- The month calendar should allow browsing months smoothly.
-- The user should be able to go back years and find old local entries.
-- Everything should be powered by local SwiftData entries.
-- Do not fetch from a backend.
-
-## Required Behaviour
-
-On Journal Home:
-
-- Keep the compact recent-days strip by default.
-- Add a chevron or calendar button near the recent-days header.
-- Tapping it expands into a full month calendar.
-- Tapping again collapses back to recent days.
-
-Full calendar state:
-
-- Show a top bar with the current month and year.
-- Example: `May 2026`
-- Include previous/next controls where appropriate.
-- Allow horizontal swiping to change month.
-- Show all days in the selected month.
-- Show subtle indicators on dates that have journal entries.
-- Highlight the selected date.
-- Tapping a date filters/shows entries for that date.
-- If a date has multiple entries, show all entries for that date below the calendar.
-- If a date has no entries, show a calm empty state.
-
-Month navigation:
-
-- Smooth animated transitions.
-- Swiping left/right changes month.
-- Users should be able to go back years.
-- Calendar must remain performant with many local entries.
-
-## Calendar UI Direction
-
-Keep the same Drift style:
-
-- dark mode-first
-- minimal
-- premium
-- calm
-- rounded cards
-- subtle purple accent
-- SFSymbols only
-- no imagery
-- no heavy decoration
-
-Suggested symbols:
-
-- calendar
-- chevron.up
-- chevron.down
-- chevron.left
-- chevron.right
-- circle.fill for entry indicators
-
-## Architecture
-
-Create or update clean components:
-
-- CalendarStripView
-- MonthCalendarView
-- CalendarDayCell
-- CalendarMonthHeader
-- CalendarEntryListView if helpful
-
-Create or update ViewModel logic:
-
-- selected date
-- selected month
-- collapsed/expanded calendar state
-- entries grouped by day
-- month navigation
-- date filtering
-
-Do not put calendar business logic directly in SwiftUI views.
+The current journal entry should become a Reflection Drift.
 
 ---
 
-# 2. Add Images To Journal Entries
+# Implementation Strategy
 
-Users should be able to add images to a specific journal entry when reviewing or editing.
+Do this incrementally.
 
-This is a free feature.
+Do not perform a massive unsafe rename across the entire project.
 
-## Required Behaviour
+Prefer compatibility layers, type aliases, adapters, and staged migration.
 
-Users should be able to add images from:
+Existing app behaviour must continue to work.
 
-- Review Entry screen before saving
-- Edit Entry screen after saving
-- Entry Detail screen if edit mode exists
+Existing persisted data must remain accessible.
 
-Users should be able to:
+---
 
-- pick one or more images
-- preview attached images
-- remove an attached image
-- save image attachments locally
-- see image thumbnails on Entry Detail
-- optionally see a subtle image indicator on Journal Home cards
+# Step 1: Add New Domain Models
 
-Do not upload images.
+Add new domain models while keeping existing models working.
 
-Do not use cloud storage.
+Create:
 
-Do not store images in a backend.
+- DriftItem
+- DriftType
+- DriftSpace
+- ContextPack
+- AIVisibility
+- DriftSource
+- DriftStatus
+- DriftCaptureProposal
+- DriftAction
 
-## Image Storage
+If similar models already exist, extend or adapt them cleanly.
 
-Images must be stored locally.
+Suggested models:
 
-Preferred approach:
+    DriftItem
+    DriftType
+    DriftSpace
+    ContextPack
+    AIVisibility
+    DriftCaptureProposal
 
-- store image files in the app’s local documents/application support directory
-- store lightweight image metadata/path references in SwiftData
-- avoid storing large image blobs directly in SwiftData unless there is a strong reason
+Keep models Codable, Hashable, Identifiable where appropriate.
 
-Create a clean model such as:
+Use stable raw values.
 
-    JournalImageAttachment
+---
 
-Possible fields:
+# DriftItem
+
+A DriftItem should support:
 
 - id
-- entryId
-- localFileName
 - createdAt
-- originalFileName if available
-- width
-- height
-- fileSize
-- thumbnailFileName if generated
+- updatedAt
+- title
+- body/transcript
+- type
+- mood
+- tags
+- spaces
+- attachments
+- source
+- aiVisibility
+- status
+- linkedDriftIds
+- linkedGoalIds if useful
 
-If simpler for this chunk, store:
+Do not remove JournalEntry yet.
 
-- id
-- localFileName
-- createdAt
+Map JournalEntry to DriftItem where practical.
 
-Keep it clean and expandable.
+For now, existing journal entries can be represented as:
 
-## Image Picker
-
-Use Apple-native APIs.
-
-Prefer:
-
-- PhotosPicker / PhotosUI
-
-Do not add third-party image picker packages.
-
-## Image Compression
-
-Implement sensible local image handling:
-
-- downscale large images before saving if needed
-- compress to reasonable JPEG/HEIC quality
-- avoid huge storage usage
-- generate thumbnails if practical
-- do not block the main thread during image processing
-
-Keep image processing local.
-
-## Privacy
-
-Add or keep privacy copy accurate:
-
-    Images are stored on this device with your journal entry.
-
-Do not claim encryption unless actually implemented.
-
-## Deletion
-
-When an image is removed from an entry:
-
-- remove the metadata reference
-- delete the local image file where practical
-
-When an entry is deleted:
-
-- delete associated local images where practical
-
-When all entries are deleted:
-
-- delete associated local images where practical
+    DriftType.reflection
 
 ---
 
-# 3. Mood Graph In Insights
+# DriftType
 
-Add a graph to track mood over time in Insights.
+Add types:
 
-This is a free local insight.
+- thought
+- reflection
+- goal
+- idea
+- memory
+- mood
+- decision
+- task
+- visual
+- context
 
-Do not use AI.
-
-Do not use networking.
-
-## Required Behaviour
-
-Insights should include a mood-over-time graph.
-
-The graph should:
-
-- use local saved entries only
-- plot mood over time
-- support at least a recent range, such as:
-  - last 7 days
-  - last 30 days
-  - this month
-- show empty state if not enough data exists
-- be visually calm and minimal
-
-## Mood Scoring
-
-Create a simple local mapping from Mood to numeric value.
+Use compact switch formatting for display names and symbols.
 
 Example:
 
-- positive: 5
-- reflective: 4
-- neutral: 3
-- anxious: 2
-- stressed: 2
-- low: 1
-- unknown: ignored or neutral
-
-Keep the mapping simple and documented.
-
-Do not present this as medical accuracy.
-
-Use wording like:
-
-    Mood trend
-
-Avoid wording like:
-
-    Mental health score
-
-## UI Direction
-
-The graph should match Drift:
-
-- dark card
-- subtle line
-- purple/accent highlights
-- simple labels
-- no clutter
-- no medical framing
-
-Use Swift Charts if available and appropriate.
-
-If Swift Charts adds complexity, implement a simple lightweight custom line chart.
-
-Prefer Apple-native APIs.
-
-## Insights Updates
-
-Insights should include:
-
-- mood trend graph
-- most common mood
-- most common theme
-- entries this week
-- writing streak
-- empty states
-
-Keep everything local.
-
----
-
-# 4. Listen Back In Review Entry
-
-Users should be able to listen back to the temporary recording before saving an entry.
-
-This is free.
-
-## Required Behaviour
-
-In Review Entry, when a temporary audio file exists:
-
-- show playback controls
-- allow play/pause
-- show duration if available
-- show progress if simple
-- allow scrubbing if easy, but not required
-
-After saving:
-
-- keep current MVP behaviour of discarding temporary audio unless the app explicitly supports permanent audio storage
-- do not permanently store audio by default
-- do not upload audio
-
-If audio is unavailable:
-
-- hide playback controls gracefully
-
-## Architecture
-
-Use or create:
-
-- AudioPlaybackService
-- AVAudioPlaybackService
-- PreviewAudioPlaybackService
-
-Keep AVFoundation playback code out of SwiftUI views.
-
----
-
-# 5. Empty / Silent Recording Handling
-
-Improve recording so Drift avoids empty entries.
-
-## Required Behaviour
-
-During recording:
-
-- monitor local audio level
-- detect sustained silence
-- after around 10 seconds of no meaningful voice activity, show a gentle prompt:
-
-    Still there?
-
-Prompt actions:
-
-- Keep recording
-- Stop recording
-- Discard
-
-If silence continues for longer:
-
-- auto-pause rather than auto-delete
-
-Do not save empty transcripts without confirmation.
-
-If transcription returns empty text:
-
-- show a calm error
-- allow retry
-- allow manual entry
-- allow discard
-
-Suggested copy:
-
-    We couldn’t hear anything clearly. You can try again or write the entry manually.
-
-Do not upload audio for silence detection.
-
-Do not use external services.
-
----
-
-# 6. User-Created Themes / Categories
-
-Users should be able to add custom journal themes/categories similar to tags.
-
-This is free.
-
-## Required Behaviour
-
-Keep existing built-in themes.
-
-Add support for user-created themes.
-
-Users should be able to:
-
-- create a custom theme
-- select custom themes on Review Entry
-- select custom themes when editing an entry
-- see custom themes on Entry Detail
-- see custom themes on Journal Home cards where appropriate
-- search by custom theme where practical
-- delete a custom theme if safe
-
-Keep it local-only.
-
-Do not add backend sync.
-
-## Model Guidance
-
-Do not remove the existing built-in `JournalTheme` enum unless there is a clean migration path.
-
-If needed, introduce a new model that can represent both built-in and custom themes.
-
-For example:
-
-    EntryTheme {
-      case builtIn(JournalTheme)
-      case custom(CustomJournalTheme)
+    switch self {
+    case .thought: "Thought"
+    case .reflection: "Reflection"
+    case .goal: "Goal"
     }
 
-Or use a domain model with:
+---
+
+# DriftSpace
+
+Add a Space model.
+
+A Space is a board/collection for Drifts.
+
+Fields should include:
 
 - id
 - name
-- kind: builtIn/custom
-- builtInRawValue
+- description
+- icon
+- color/accent if supported
 - createdAt
+- updatedAt
+- isPinned
+- aiVisibility
 
-Choose the cleanest approach for the current codebase.
+Do not fully replace themes/categories yet.
 
-## Storage
-
-Custom themes should persist locally.
-
-Use SwiftData or existing settings/local storage depending on what best fits the current architecture.
-
----
-
-# 7. In-App Guide Annotations
-
-Add a non-blocking guide that helps users understand Drift.
-
-This is not onboarding.
-
-## Required Behaviour
-
-The guide should:
-
-- be available from Settings
-- optionally appear subtly for first-time users if appropriate
-- be dismissible
-- remember dismissed state locally
-- use smooth, fluid UI
-- feel like annotations/coach marks/tooltips, not a heavy slideshow
-
-The guide should explain:
-
-- tap mic to record
-- review before saving
-- use tags and themes
-- browse by calendar
-- reminders are local
-- entries stay on device
-- add images to entries if implemented
-
-## UI Direction
-
-Keep it beautiful and lightweight.
-
-Use:
-
-- SFSymbols
-- small annotation cards
-- subtle arrows/anchors if practical
-- smooth transitions
-- no imagery
-- no heavy tutorial screens
-
-Do not block core usage.
+Instead, prepare a migration path where current custom themes can later become Spaces.
 
 ---
 
-# Data / Persistence Updates
+# ContextPack
 
-Update local persistence as needed for:
+Add a ContextPack model.
 
-- calendar grouping
-- image attachments
-- custom themes
-- guide dismissed state
-- mood graph calculations
+A Context Pack is a curated group of Drifts/Spaces that can be copied/shared with AI.
 
-Do not add backend/networking.
+Fields should include:
 
-Do not add cloud sync.
+- id
+- name
+- description
+- driftIds
+- spaceIds
+- createdAt
+- updatedAt
+- aiVisibility
 
-Keep SwiftData migrations simple and safe.
+Do not add MCP.
 
-If model changes require migration notes, add TODOs or a lightweight migration approach.
+Do not add backend.
 
----
-
-# Privacy Requirements
-
-Keep privacy copy accurate.
-
-Safe claims:
-
-    Your entries are stored on this device.
-    Images are stored on this device with your journal entry.
-    Audio playback uses the temporary recording before saving.
-    Drift works offline.
-    No account is required.
-
-Do not claim:
-
-    End-to-end encrypted
-
-unless actually implemented.
-
-Do not claim:
-
-    Audio is stored forever
-
-because temporary audio should be discarded unless intentionally saved.
+For now, Context Packs are local-only.
 
 ---
 
-# Testing
+# AIVisibility
 
-Add or update Swift Testing tests where practical for:
+Add visibility model:
 
-## Calendar
+- privateLocalOnly
+- availableForInAppAI
+- availableForChatGPT
 
-- groups entries by day
-- selected date filters entries
-- month navigation changes selected month
-- dates with entries are marked
-- empty day state works
+Default should always be:
 
-## Images
+    privateLocalOnly
 
-- image attachment metadata is saved
-- image attachment metadata is removed
-- deleting an entry cleans associated image references where practical
-- JournalEntry mapping supports image attachments
+No existing data should become AI-visible by default.
 
-## Mood Graph
+---
 
-- mood values map correctly
-- unknown mood is handled safely
-- mood trend produces expected points
-- empty state when no entries exist
+# Step 2: Add Service Protocols
 
-## Listen Back
+Add protocol scaffolding for future architecture.
 
-- playback ViewModel state
-- play/pause state transitions
-- unavailable audio hides controls
+Create:
 
-## Silence Handling
+- DriftRepository
+- DriftCapturePipeline
+- DriftClassificationService
+- DriftSearchService
+- ContextPackService
+- ContextExportService
 
-- silence prompt triggers after threshold
-- keep recording dismisses prompt
-- stop recording finishes correctly
-- discard cancels correctly
-- empty transcript fallback works
+Do not fully implement AI-backed services yet.
 
-## Custom Themes
+Use local/placeholder implementations only where needed.
 
-- create custom theme
-- select custom theme
-- save entry with custom theme
-- search by custom theme where practical
+Current JournalRepository can remain the source of truth for now.
 
-## Guide
+Add adapters where useful:
 
-- guide can be dismissed
-- dismissed state persists
-- guide can be reopened from Settings
+- JournalEntryToDriftItemMapper
+- DriftItemToJournalEntryMapper, if needed
 
-Use Mockable-generated mocks where appropriate.
+Do not duplicate persistence unnecessarily.
 
-Avoid brittle UI tests.
+---
+
+# Step 3: UI Terminology Prep
+
+Begin replacing user-facing text where safe.
+
+Prefer:
+
+- Drift
+- Drifts
+- Capture
+- Reflection
+- Spaces
+- Timeline
+- Context
+
+Avoid overusing:
+
+- Journal
+- Journal Entry
+
+But do not break screens/routes if renaming them would be risky.
+
+Safe UI copy updates:
+
+- “Review Entry” can become “Review Drift”
+- “New Entry” can become “New Drift”
+- “Journal” tab can remain temporarily if changing it is risky
+- “Entries” can become “Drifts” where safe
+- “Themes” can remain temporarily until Spaces are implemented
+
+Do not rename files/routes aggressively unless safe.
+
+---
+
+# Step 4: Add Type Selection In Review
+
+In the review flow, add a simple Drift Type selector.
+
+When a user records/captures something, the Review screen should allow selecting:
+
+- Reflection
+- Thought
+- Goal
+- Idea
+- Memory
+- Mood
+- Decision
+- Task
+- Visual
+- Context
+
+Default for existing voice capture:
+
+    Reflection
+
+This is the first user-visible step away from pure journaling.
+
+Do not add AI classification yet.
+
+Manual type selection is enough for now.
+
+Persist selected type if the current persistence model can support it safely.
+
+If persistence cannot support it yet, add the field with a safe migration or store it as metadata.
+
+---
+
+# Step 5: Add Spaces Placeholder
+
+Add a lightweight Spaces screen or placeholder if safe.
+
+Do not fully build Spaces yet.
+
+The screen should explain:
+
+    Spaces help you group related Drifts, like goals, ideas, moodboards, and projects.
+
+If current themes/categories can be shown as early Spaces, do that carefully.
+
+Otherwise create a minimal local placeholder with:
+
+- Inbox
+- Goals
+- Ideas
+- Memories
+
+Keep the UI consistent with Drift.
+
+---
+
+# Step 6: Add Context Pack Placeholder
+
+Add a local-only Context Packs placeholder if safe.
+
+Purpose:
+
+- explain future AI context packs
+- prepare architecture
+- no MCP
+- no backend
+
+Copy:
+
+    Context Packs let you collect Drifts and share them with AI when you choose.
+
+Add a simple placeholder action:
+
+    Copy Context for ChatGPT
+
+If easy, generate a simple Markdown export from selected/recent Drifts.
+
+If not easy, leave as polished placeholder.
+
+Do not add ChatGPT API integration.
+
+---
+
+# Step 7: Navigation Direction
+
+Move gently toward the future navigation:
+
+- Capture
+- Spaces
+- Timeline
+- Settings
+
+Do not fully restructure navigation if risky.
+
+If the current app uses:
+
+- Journal
+- Insights
+- Settings
+
+Then either:
+
+1. keep current tabs for now and add Spaces/Context gradually, or
+2. rename Journal to Capture/Timeline only if safe.
+
+Prioritise stability.
+
+---
+
+# Step 8: Persistence Safety
+
+Do not break existing SwiftData data.
+
+If adding fields to persistence:
+
+- use optional/default values
+- default existing entries to reflection
+- default AI visibility to privateLocalOnly
+- default status to active
+
+Do not perform destructive migrations.
+
+Do not delete or hide old entries.
+
+---
+
+# Step 9: Privacy
+
+Default all new AI/context functionality to private/local only.
+
+Use copy:
+
+    Drifts are private by default. You choose what to share with AI.
+
+Do not imply ChatGPT access exists yet.
+
+Do not say MCP is live.
+
+Do not say AI can reference Drifts until that functionality exists.
+
+---
+
+# Tests
+
+Add or update Swift Testing tests for:
+
+- DriftType display names
+- DriftType default for existing entries
+- AIVisibility defaults to privateLocalOnly
+- JournalEntry to DriftItem mapping
+- Review screen saves selected Drift type
+- ContextPack model creation
+- DriftSpace model creation
+- no existing entries are hidden or lost
+
+Use Mockable-generated mocks where practical.
 
 ---
 
 # Keep Compiling
 
-Keep the app compiling after this chunk.
+Keep the app compiling.
 
 Do not break:
 
-- Journal Home
-- live audio recording
-- audio-level animation
-- Apple Speech transcription
-- notification routing
-- SwiftData persistence
+- voice capture
 - review/save flow
-- Entry Detail
-- edit/delete entry behaviour
-- Insights
-- Settings
-- Reminder Settings
-- Appearance Settings
-- Export
-- Preview/demo mode
+- local persistence
+- calendar
+- images
+- mood graph
+- reminders
+- backup/restore
+- paywall foundation
+- settings
+- export
 - test suite
+
+---
+
+# Final Summary
 
 After implementation, summarise:
 
-- files changed
-- calendar implementation
-- image attachment implementation
-- mood graph implementation
-- listen-back implementation
-- silence handling behaviour
-- custom theme model/storage
-- guide annotation behaviour
+- new models added
+- new services/protocols added
+- terminology changes made
+- Review Drift type selection
+- Spaces placeholder
+- Context Pack placeholder
+- persistence/migration safety
 - tests added/updated
-- any TODOs left
+- remaining work to complete the full product pivot

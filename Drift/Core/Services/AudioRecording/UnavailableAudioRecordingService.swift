@@ -10,6 +10,10 @@ import Foundation
 final class UnavailableAudioRecordingService: AudioRecordingService, Sendable {
   var recordingState: RecordingState { .idle }
 
+  func currentPermissionStatus() async -> PermissionStatus {
+    .restricted
+  }
+
   func requestPermission() async throws {
     throw DriftServiceError.unavailable("Voice recording is not wired yet.")
   }
