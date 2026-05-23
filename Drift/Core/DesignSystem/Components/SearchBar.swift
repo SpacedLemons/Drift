@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SearchBar: View {
   @Binding var text: String
-  var placeholder = "Search entries"
+  var placeholder = "Search Drifts"
 
   var body: some View {
     HStack(spacing: AppSpacing.s) {

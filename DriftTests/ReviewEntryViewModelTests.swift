@@ -22,6 +22,7 @@ struct ReviewEntryViewModelTests {
     )
 
     #expect(viewModel.transcript == draft.transcript)
+    #expect(viewModel.selectedDriftType == .reflection)
     #expect(viewModel.selectedMood == draft.suggestedMood)
     #expect(viewModel.selectedThemes == draft.suggestedThemes)
     #expect(viewModel.tags == draft.tags)
@@ -68,10 +69,29 @@ struct ReviewEntryViewModelTests {
 
     #expect(entry?.transcript == "Updated transcript for saving.")
     #expect(entry?.mood == .reflective)
+    #expect(entry?.driftType == .reflection)
     #expect(entry?.themes == [.growth])
     #expect(entry?.tags == ["updated"])
     verify(repository)
       .saveEntry(.any).called(.once)
+  }
+
+  @Test
+  func savesSelectedDriftType() async throws {
+    let repository = PreviewJournalRepository(entries: [])
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: repository
+    )
+
+    viewModel.selectDriftType(.goal)
+    let entry = await viewModel.save()
+    let savedEntry = try await repository.fetchEntry(id: makeDraft().id)
+
+    #expect(entry?.driftType == .goal)
+    #expect(savedEntry?.driftType == .goal)
+    #expect(savedEntry?.aiVisibility == .privateLocalOnly)
+    #expect(savedEntry?.driftStatus == .active)
   }
 
   @Test
@@ -160,7 +180,7 @@ struct ReviewEntryViewModelTests {
     let entry = await viewModel.save()
 
     #expect(entry == nil)
-    #expect(viewModel.errorMessage == "We could not save this entry. Please try again.")
+    #expect(viewModel.errorMessage == "We could not save this Drift. Please try again.")
     #expect(!viewModel.isSaving)
   }
 
@@ -184,7 +204,7 @@ struct ReviewEntryViewModelTests {
     #expect(entry == nil)
     #expect(
       viewModel.errorMessage
-        == "You've used today's 10 free entries. Come back tomorrow or upgrade for more daily entries."
+        == "You've used today's 10 free Drifts. Come back tomorrow or upgrade for more daily Drifts."
     )
     verify(repository)
       .saveEntry(.any).called(.never)

@@ -29,10 +29,12 @@ struct AboutView: View {
               .foregroundStyle(AppColors.textPrimary)
               .accessibilityAddTraits(.isHeader)
 
-            Text("Drift is a private voice journal for capturing thoughts quickly and calmly.")
-              .font(AppTypography.body)
-              .foregroundStyle(AppColors.textSecondary)
-              .fixedSize(horizontal: false, vertical: true)
+            Text(
+              "Drift is a private voice-first personal context board for capturing thoughts quickly and calmly."
+            )
+            .font(AppTypography.body)
+            .foregroundStyle(AppColors.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
           }
 
           SettingsSectionCard(title: "App") {
@@ -40,7 +42,7 @@ struct AboutView: View {
             Divider().overlay(AppColors.border)
             aboutRow(title: "Build", value: buildNumber)
             Divider().overlay(AppColors.border)
-            aboutRow(title: "Privacy", value: "Entries are stored on this device.")
+            aboutRow(title: "Privacy", value: "Drifts are stored on this device.")
             Divider().overlay(AppColors.border)
             aboutRow(title: "Acknowledgements", value: "Apple frameworks and open-source tooling.")
             Divider().overlay(AppColors.border)

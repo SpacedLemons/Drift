@@ -49,7 +49,8 @@ enum PreviewData {
           fileSize: 140_000,
           thumbnailFileName: "preview-focus-thumb.jpg"
         )
-      ]
+      ],
+      driftType: .reflection
     ),
     JournalEntry(
       id: uuid("9C16029B-C3E7-4E92-8D43-52E5A77B8799"),
@@ -63,7 +64,8 @@ enum PreviewData {
       customThemes: [customThemes[1]],
       tags: ["deadline", "planning"],
       duration: 126,
-      source: .voice
+      source: .voice,
+      driftType: .task
     ),
     JournalEntry(
       id: uuid("B6C4D164-8262-4D0B-8B17-95B123966A55"),
@@ -77,7 +79,8 @@ enum PreviewData {
       customThemes: [customThemes[0]],
       tags: ["walk", "evening"],
       duration: 72,
-      source: .voice
+      source: .voice,
+      driftType: .memory
     ),
     JournalEntry(
       id: uuid("56F5FBF2-E4F6-4507-8981-A7C325E6F901"),
@@ -90,7 +93,8 @@ enum PreviewData {
       themes: [.relationships, .growth],
       tags: ["call", "notes"],
       duration: 98,
-      source: .voice
+      source: .voice,
+      driftType: .decision
     ),
   ]
 

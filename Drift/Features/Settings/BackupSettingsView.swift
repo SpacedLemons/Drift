@@ -52,7 +52,7 @@ struct BackupSettingsView: View {
       icon: AppIcons.lockShield,
       title: "Private iCloud backup",
       message:
-        "Drift can keep a private backup in your iCloud account so you can restore your journal on a new iPhone. Your journal remains local-first. iCloud backup is optional."
+        "Drift can keep a private backup in your iCloud account so you can restore your Drifts on a new iPhone. Drift remains local-first. iCloud backup is optional."
     )
   }
 
@@ -61,7 +61,7 @@ struct BackupSettingsView: View {
       SettingsToggleRow(
         icon: AppIcons.iCloudUpload,
         title: "iCloud Backup",
-        subtitle: "Automatically back up your journal to your private iCloud account.",
+        subtitle: "Automatically back up your Drifts to your private iCloud account.",
         isOn: Binding(
           get: { viewModel.status.isICloudBackupEnabled },
           set: { isEnabled in
@@ -107,9 +107,9 @@ struct BackupSettingsView: View {
 
       SettingsActionRow(
         icon: AppIcons.iCloudDownload,
-        title: viewModel.isRestoring ? "Restoring Journal" : "Restore Drift Journal",
+        title: viewModel.isRestoring ? "Restoring Drifts" : "Restore Drifts",
         subtitle:
-          "Restore entries from your private iCloud backup. Existing entries stay on this device.",
+          "Restore Drifts from your private iCloud backup. Existing Drifts stay on this device.",
         action: {
           Task { await viewModel.restoreJournal() }
         }

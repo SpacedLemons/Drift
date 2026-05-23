@@ -114,6 +114,8 @@ actor SwiftDataJournalRepository: JournalRepository {
       entry.transcript,
       entry.mood?.rawValue ?? "",
       entry.mood?.displayName ?? "",
+      entry.driftType.rawValue,
+      entry.driftType.displayName,
       entry.themes.map(\.rawValue).joined(separator: " "),
       entry.themes.map(\.displayName).joined(separator: " "),
       entry.customThemes.map(\.displayName).joined(separator: " "),

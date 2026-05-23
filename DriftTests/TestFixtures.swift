@@ -7,6 +7,8 @@
 
 import Foundation
 
+@testable import Drift
+
 func fixtureUUID(_ rawValue: String) -> UUID {
   UUID(uuidString: rawValue) ?? UUID()
 }

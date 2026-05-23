@@ -17,15 +17,15 @@ enum JournalRepositoryError: LocalizedError, Equatable, Sendable {
   var errorDescription: String? {
     switch self {
     case .entryNotFound:
-      "We could not find this entry."
+      "We could not find this Drift."
     case .saveFailed:
-      "We could not save this entry. Please try again."
+      "We could not save this Drift. Please try again."
     case .updateFailed:
-      "We could not save your changes. Please try again."
+      "We could not save your Drift changes. Please try again."
     case .deleteFailed:
-      "We could not delete this entry. Please try again."
+      "We could not delete this Drift. Please try again."
     case .fetchFailed:
-      "We could not load your journal."
+      "We could not load your Drifts."
     }
   }
 }

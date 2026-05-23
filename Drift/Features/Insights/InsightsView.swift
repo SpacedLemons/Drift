@@ -43,7 +43,7 @@ struct InsightsView: View {
           } else if viewModel.entries.isEmpty {
             EmptyStateView(
               title: "No insights yet",
-              message: "Insights will appear once you have a few entries.",
+              message: "Insights will appear once you have a few Drifts.",
               icon: AppIcons.chart
             )
           } else {
@@ -65,7 +65,7 @@ struct InsightsView: View {
         .font(AppTypography.appTitle)
         .foregroundStyle(AppColors.textPrimary)
 
-      Text("Local patterns from your journal entries.")
+      Text("Local patterns from your Drifts.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
     }
@@ -91,7 +91,7 @@ struct InsightsView: View {
 
       HStack(spacing: AppSpacing.s) {
         insightCard(
-          title: "Total entries",
+          title: "Total Drifts",
           value: "\(viewModel.summary.totalEntries)",
           icon: AppIcons.book
         )
@@ -128,8 +128,8 @@ struct InsightsView: View {
       VStack(alignment: .leading, spacing: AppSpacing.m) {
         if viewModel.summary.moodTrend.count < 2 {
           EmptyStateView(
-            title: "Mood trend needs more entries",
-            message: "Save at least two entries with moods to see a local trend.",
+            title: "Mood trend needs more Drifts",
+            message: "Save at least two Drifts with moods to see a local trend.",
             icon: AppIcons.chartLine
           )
           .padding(.vertical, AppSpacing.s)
@@ -202,7 +202,7 @@ struct InsightsView: View {
           MoodPill(mood: viewModel.summary.mostCommonMood)
         }
 
-        Text("Mood trend uses local saved entries only.")
+        Text("Mood trend uses local saved Drifts only.")
           .font(AppTypography.body)
           .foregroundStyle(AppColors.textSecondary)
       }

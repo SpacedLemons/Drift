@@ -22,7 +22,7 @@ enum DriftServiceError: LocalizedError, Equatable, Sendable {
     case .emptyRecording:
       "No usable recording was captured."
     case .notFound:
-      "The requested journal entry could not be found."
+      "The requested Drift could not be found."
     }
   }
 }

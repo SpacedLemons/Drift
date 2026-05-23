@@ -47,7 +47,7 @@ final class ReminderSettingsViewModel {
     case .unknown:
       "Drift can send local reminders to help you check in. Reminders are optional."
     case .granted:
-      "Drift will remind you locally. Your entries stay on this device."
+      "Drift will remind you locally. Your Drifts stay on this device."
     case .denied:
       "Notifications are off. You can enable them in iOS Settings if you want Drift to remind you."
     case .restricted:

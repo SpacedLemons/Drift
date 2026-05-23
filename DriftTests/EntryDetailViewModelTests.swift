@@ -43,7 +43,7 @@ struct EntryDetailViewModelTests {
     await viewModel.load()
 
     #expect(viewModel.entry == nil)
-    #expect(viewModel.errorMessage == "We could not find this entry.")
+    #expect(viewModel.errorMessage == "We could not find this Drift.")
   }
 
   @Test
@@ -118,7 +118,7 @@ struct EntryDetailViewModelTests {
     let didSave = await viewModel.saveChanges()
 
     #expect(!didSave)
-    #expect(viewModel.errorMessage == "An entry needs some text before it can be saved.")
+    #expect(viewModel.errorMessage == "A Drift needs some text before it can be saved.")
   }
 
   @Test
@@ -142,7 +142,7 @@ struct EntryDetailViewModelTests {
     let didSave = await viewModel.saveChanges()
 
     #expect(!didSave)
-    #expect(viewModel.errorMessage == "We could not save your changes. Please try again.")
+    #expect(viewModel.errorMessage == "We could not save your Drift changes. Please try again.")
     #expect(!viewModel.isSaving)
   }
 
@@ -184,7 +184,7 @@ struct EntryDetailViewModelTests {
     let didDelete = await viewModel.deleteEntry()
 
     #expect(!didDelete)
-    #expect(viewModel.errorMessage == "We could not delete this entry. Please try again.")
+    #expect(viewModel.errorMessage == "We could not delete this Drift. Please try again.")
     #expect(!viewModel.isDeleting)
   }
 

@@ -54,7 +54,7 @@ actor LocalMarkdownExportService: ExportService {
       "# Drift Export",
       "",
       "Exported: \(dateTimeString(for: exportedAt))",
-      "Entries: \(entries.count)",
+      "Drifts: \(entries.count)",
       "",
       "Exports are created locally. You choose where to save or share them.",
       "",
@@ -70,6 +70,7 @@ actor LocalMarkdownExportService: ExportService {
   private func markdownLines(for entry: JournalEntry) -> [String] {
     var lines = [
       "## \(entry.displayTitle)",
+      "Type: \(entry.driftType.displayName)",
       "Date: \(dateTimeString(for: entry.createdAt))",
       "Mood: \(entry.mood?.displayName ?? "Not set")",
       "Themes: \(joinedDisplayNames(themeNames(for: entry)))",
@@ -85,7 +86,7 @@ actor LocalMarkdownExportService: ExportService {
     }
 
     if !entry.imageAttachments.isEmpty {
-      lines.append("Images: \(entry.imageAttachments.count) stored locally with this entry")
+      lines.append("Images: \(entry.imageAttachments.count) stored locally with this Drift")
     }
 
     lines.append("")

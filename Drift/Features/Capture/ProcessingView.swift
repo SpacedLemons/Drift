@@ -37,7 +37,7 @@ struct ProcessingView: View {
             .font(.system(size: 28, weight: .semibold))
             .foregroundStyle(AppColors.accent)
 
-          Text("Preparing entry")
+          Text("Preparing Drift")
             .font(AppTypography.appTitle)
             .foregroundStyle(AppColors.textPrimary)
 
@@ -118,7 +118,7 @@ struct ProcessingView: View {
       .buttonStyle(.bordered)
       .accessibilityLabel("Record again")
 
-      Text("Trying again will void this entry")
+      Text("Trying again will discard this Drift")
         .font(AppTypography.caption)
         .foregroundStyle(AppColors.textTertiary)
         .fixedSize(horizontal: false, vertical: true)

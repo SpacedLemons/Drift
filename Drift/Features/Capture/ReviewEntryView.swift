@@ -59,6 +59,19 @@ struct ReviewEntryView: View {
           }
 
           VStack(alignment: .leading, spacing: AppSpacing.s) {
+            Text("Drift type")
+              .font(AppTypography.cardTitle)
+              .foregroundStyle(AppColors.textPrimary)
+
+            DriftTypeSelectionGrid(selection: $bindableViewModel.selectedDriftType)
+
+            Text("Voice captures start as Reflections. You can change the type before saving.")
+              .font(AppTypography.caption)
+              .foregroundStyle(AppColors.textTertiary)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+
+          VStack(alignment: .leading, spacing: AppSpacing.s) {
             Text("Suggested mood")
               .font(AppTypography.cardTitle)
               .foregroundStyle(AppColors.textPrimary)
@@ -94,7 +107,7 @@ struct ReviewEntryView: View {
 
           ImageAttachmentPickerSection(
             title: "Images",
-            subtitle: "Images are stored on this device with your journal entry.",
+            subtitle: "Images are stored on this device with your Drift.",
             attachments: viewModel.imageAttachments,
             imageAttachmentService: viewModel.imageAttachmentService,
             isProcessing: viewModel.isProcessingImages,
@@ -137,7 +150,7 @@ struct ReviewEntryView: View {
                   ProgressView()
                     .tint(.white)
                 } else {
-                  Label("Save Entry", systemImage: AppIcons.checkmark)
+                  Label("Save Drift", systemImage: AppIcons.checkmark)
                 }
               }
             )
@@ -152,7 +165,7 @@ struct ReviewEntryView: View {
     }
     .navigationBarBackButtonHidden()
     .confirmationDialog(
-      "Discard this entry?",
+      "Discard this Drift?",
       isPresented: $isShowingDiscardConfirmation,
       titleVisibility: .visible
     ) {
@@ -165,7 +178,7 @@ struct ReviewEntryView: View {
           }
         },
         label: {
-          Text("Discard Entry")
+          Text("Discard Drift")
         }
       )
 
@@ -177,7 +190,7 @@ struct ReviewEntryView: View {
         }
       )
     } message: {
-      Text("This unsaved entry will be removed from this device.")
+      Text("This unsaved Drift will be removed from this device.")
     }
     .task {
       await viewModel.loadCustomThemes()
@@ -187,11 +200,11 @@ struct ReviewEntryView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Review entry")
+      Text("Review Drift")
         .font(AppTypography.appTitle)
         .foregroundStyle(AppColors.textPrimary)
 
-      Text("You can edit the transcript and adjust the suggestion before saving.")
+      Text("You can edit the transcript, choose a type, and adjust suggestions before saving.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
     }

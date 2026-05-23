@@ -52,7 +52,7 @@ final class BackupSettingsViewModel {
   var iCloudAvailabilityMessage: String {
     switch status.iCloudAvailability {
     case .available:
-      "iCloud Backup stores a copy of your Drift journal in your private iCloud account."
+      "iCloud Backup stores a copy of your Drifts in your private iCloud account."
     case .unavailable:
       "iCloud is not available on this device."
     case .notSignedIn:
@@ -150,7 +150,7 @@ final class BackupSettingsViewModel {
 
     do {
       status = try await backupService.restoreJournal()
-      successMessage = "Restore complete. Existing entries stayed on this device."
+      successMessage = "Restore complete. Existing Drifts stayed on this device."
     } catch {
       errorMessage = userFacingErrorMessage(for: error)
     }

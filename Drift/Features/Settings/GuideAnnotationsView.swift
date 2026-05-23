@@ -75,7 +75,7 @@ struct GuideAnnotationsView: View {
         .font(AppTypography.appTitle)
         .foregroundStyle(AppColors.textPrimary)
 
-      Text("Small notes for the local-first journal flow.")
+      Text("Small notes for the local-first Drift flow.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
         .fixedSize(horizontal: false, vertical: true)

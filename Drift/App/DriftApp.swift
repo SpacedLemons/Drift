@@ -42,7 +42,7 @@ struct DriftApp: App {
       appEnvironment = nil
       notificationDelegate = nil
       startupErrorMessage =
-        "Drift could not open local journal storage. Please restart the app."
+        "Drift could not open local Drift storage. Please restart the app."
     }
   }
 

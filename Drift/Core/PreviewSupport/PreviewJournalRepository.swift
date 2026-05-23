@@ -65,6 +65,7 @@ extension JournalEntry {
       title ?? "",
       transcript,
       mood?.displayName ?? "",
+      driftType.displayName,
       themes.map(\.displayName).joined(separator: " "),
       customThemes.map(\.displayName).joined(separator: " "),
       tags.joined(separator: " "),

@@ -59,7 +59,7 @@ struct ReminderSettingsView: View {
     SettingsSectionCard(title: "Reminder") {
       SettingsToggleRow(
         icon: AppIcons.bell,
-        title: "Journal reminder",
+        title: "Drift reminder",
         subtitle: "Choose when Drift should nudge you.",
         isOn: Binding(
           get: { viewModel.configuration.isEnabled },
@@ -183,7 +183,7 @@ struct ReminderSettingsView: View {
       icon: AppIcons.shield,
       title: "Local only",
       message:
-        "Reminders are scheduled on this device. Drift does not use remote push notifications or send journal data anywhere."
+        "Reminders are scheduled on this device. Drift does not use remote push notifications or send Drift data anywhere."
     )
   }
 

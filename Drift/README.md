@@ -1,14 +1,15 @@
 # Drift
 
-Drift is a private voice journal for iOS. It lets you record a short entry, transcribe it with Apple Speech, review the text, save it locally, search past entries, view simple local insights, set local reminders, and export entries as Markdown.
+Drift is a private voice-first personal context board for iOS. It lets you capture a Drift by voice, transcribe it with Apple Speech, review the text, choose a Drift type, save it locally, search past Drifts, view simple local insights, set local reminders, and export local Markdown.
 
 ## Product Principles
 
-- Private by default: journal entries are stored on this device.
-- Offline-first: core journal browsing, storage, settings, reminders, and export are local.
+- Private by default: Drifts are stored on this device.
+- Offline-first: core Drift browsing, storage, settings, reminders, and export are local.
 - No account: Drift does not require sign-in for the MVP.
-- Local journal storage: entries are persisted with SwiftData.
+- Local storage: Reflection Drifts are persisted through the existing SwiftData journal store.
 - User-controlled export: exports are created locally and shared only when the user chooses.
+- User-controlled context: Context Packs are local placeholders and can only be copied manually.
 
 ## Tech Stack
 
@@ -41,7 +42,8 @@ xcodebuild -project Drift.xcodeproj -scheme Drift -destination 'platform=iOS Sim
 
 ## Current MVP Limitations
 
-- AI reflections are not active yet.
+- AI integrations are not active yet.
+- MCP, backend sync, and ChatGPT API integration are not implemented.
 - Drift Plus paid-feature foundations are present, but the actual future paid features are not active yet.
 - Cloud sync is not implemented.
 - Transcription depends on Apple Speech availability and may vary by device, language, and iOS support.

@@ -43,10 +43,11 @@ struct ExportServiceTests {
     #expect(fileURL.lastPathComponent == "drift-export-2026-05-13-100000.md")
     #expect(markdown.contains("# Drift Export"))
     #expect(markdown.contains("Exported: 2026-05-13 10:00"))
-    #expect(markdown.contains("Entries: 2"))
+    #expect(markdown.contains("Drifts: 2"))
     #expect(
       markdown.contains("Exports are created locally. You choose where to save or share them."))
     #expect(markdown.contains("## Focused morning"))
+    #expect(markdown.contains("Type: Reflection"))
     #expect(markdown.contains("Date: 2026-05-13 06:38"))
     #expect(markdown.contains("Mood: Positive"))
     #expect(markdown.contains("Themes: Productivity, Work"))
@@ -86,7 +87,7 @@ struct ExportServiceTests {
 
     #expect(fileURL.lastPathComponent == "drift-export-2026-05-13-100000.md")
     #expect(markdown.contains("# Drift Export"))
-    #expect(markdown.contains("Entries: 0"))
+    #expect(markdown.contains("Drifts: 0"))
     #expect(
       markdown.contains("Exports are created locally. You choose where to save or share them."))
   }

@@ -175,6 +175,7 @@ final class JournalHomeViewModel {
       entry.title ?? "",
       entry.transcript,
       entry.mood?.displayName ?? "",
+      entry.driftType.displayName,
       entry.themes.map(\.displayName).joined(separator: " "),
       entry.customThemes.map(\.displayName).joined(separator: " "),
       entry.tags.joined(separator: " "),
@@ -190,7 +191,7 @@ final class JournalHomeViewModel {
       return repositoryError.localizedDescription
     }
 
-    return "We could not load your journal."
+    return "We could not load your Drifts."
   }
 
   private func hasEntry(on date: Date) -> Bool {

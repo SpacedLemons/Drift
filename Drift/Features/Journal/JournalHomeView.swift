@@ -90,10 +90,10 @@ struct JournalHomeView: View {
           .foregroundStyle(AppColors.accentSecondary)
           .frame(width: 38, height: 38)
           .background(AppColors.accentSecondary.opacity(0.12), in: Circle())
-          .accessibilityLabel("Private local journal")
+          .accessibilityLabel("Private local Drifts")
       }
 
-      Text("Your entries are stored on this device. No account is required.")
+      Text("Let your thoughts Drift. Your Drifts are stored on this device.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
         .fixedSize(horizontal: false, vertical: true)
@@ -108,7 +108,7 @@ struct JournalHomeView: View {
         .frame(maxWidth: .infinity, minHeight: 160)
     } else if let errorMessage = viewModel.errorMessage {
       EmptyStateView(
-        title: "Entries unavailable",
+        title: "Drifts unavailable",
         message: errorMessage,
         icon: AppIcons.waveform
       )
@@ -137,14 +137,14 @@ struct JournalHomeView: View {
 
   private var emptyEntriesTitle: String {
     if viewModel.entries.isEmpty {
-      return "No entries yet."
+      return "No Drifts yet."
     }
 
     if viewModel.selectedDateHasNoEntries {
-      return "No entries for this date."
+      return "No Drifts for this date."
     }
 
-    return "No matching entries."
+    return "No matching Drifts."
   }
 
   private var emptyEntriesMessage: String {
@@ -161,12 +161,12 @@ struct JournalHomeView: View {
 
   private var firstRunIntroCard: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Label("Private voice journal", systemImage: AppIcons.shield)
+      Label("Private voice capture", systemImage: AppIcons.shield)
         .font(AppTypography.cardTitle)
         .foregroundStyle(AppColors.textPrimary)
 
       Text(
-        "Entries stay on this device and no account is needed. Drift needs microphone access so you can record voice journal entries. Drift uses speech recognition to turn your voice journal entries into text. Reminders are optional."
+        "Drifts stay on this device and no account is needed. Drift needs microphone access so you can capture thoughts by voice. Speech recognition turns your voice into text. Reminders are optional."
       )
       .font(AppTypography.body)
       .foregroundStyle(AppColors.textSecondary)
@@ -186,7 +186,7 @@ struct JournalHomeView: View {
   }
 }
 
-#Preview("Preview entries") {
+#Preview("Preview Drifts") {
   NavigationStack {
     JournalHomeView(
       viewModel: JournalHomeViewModel(

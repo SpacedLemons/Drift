@@ -41,6 +41,9 @@ struct JournalEntryMapperTests {
     #expect(entity.duration == entry.duration)
     #expect(entity.sourceRawValue == EntrySource.typed.rawValue)
     #expect(entity.isFavorite == true)
+    #expect(entity.driftTypeRawValue == DriftType.task.rawValue)
+    #expect(entity.aiVisibilityRawValue == AIVisibility.privateLocalOnly.rawValue)
+    #expect(entity.driftStatusRawValue == DriftStatus.active.rawValue)
   }
 
   @Test
@@ -60,7 +63,10 @@ struct JournalEntryMapperTests {
       imageAttachments: entry.imageAttachments,
       duration: entry.duration,
       sourceRawValue: EntrySource.typed.rawValue,
-      isFavorite: entry.isFavorite
+      isFavorite: entry.isFavorite,
+      driftTypeRawValue: DriftType.task.rawValue,
+      aiVisibilityRawValue: AIVisibility.privateLocalOnly.rawValue,
+      driftStatusRawValue: DriftStatus.active.rawValue
     )
 
     let mappedEntry = JournalEntryMapper.model(from: entity)
@@ -93,6 +99,21 @@ struct JournalEntryMapperTests {
     let entry = JournalEntryMapper.model(from: entity)
 
     #expect(entry.source == .voice)
+  }
+
+  @Test
+  func legacyDriftMetadataDefaultsSafely() throws {
+    let entity = makeEntity(
+      driftTypeRawValue: nil,
+      aiVisibilityRawValue: nil,
+      driftStatusRawValue: nil
+    )
+
+    let entry = JournalEntryMapper.model(from: entity)
+
+    #expect(entry.driftType == .reflection)
+    #expect(entry.aiVisibility == .privateLocalOnly)
+    #expect(entry.driftStatus == .active)
   }
 
   @Test
@@ -139,6 +160,9 @@ struct JournalEntryMapperTests {
     #expect(mappedEntry.imageAttachments == entry.imageAttachments)
     #expect(mappedEntry.duration == entry.duration)
     #expect(mappedEntry.isFavorite == entry.isFavorite)
+    #expect(mappedEntry.driftType == entry.driftType)
+    #expect(mappedEntry.aiVisibility == entry.aiVisibility)
+    #expect(mappedEntry.driftStatus == entry.driftStatus)
   }
 }
 
@@ -174,7 +198,10 @@ private func makeEntry() -> JournalEntry {
         fileSize: 123_456,
         thumbnailFileName: "image-thumb.jpg"
       )
-    ]
+    ],
+    driftType: .task,
+    aiVisibility: .privateLocalOnly,
+    driftStatus: .active
   )
 }
 
@@ -192,7 +219,10 @@ private func makeEntity(
   imageAttachments: [JournalImageAttachment] = [],
   duration: TimeInterval? = 42,
   sourceRawValue: String = EntrySource.voice.rawValue,
-  isFavorite: Bool = false
+  isFavorite: Bool = false,
+  driftTypeRawValue: String? = DriftType.reflection.rawValue,
+  aiVisibilityRawValue: String? = AIVisibility.privateLocalOnly.rawValue,
+  driftStatusRawValue: String? = DriftStatus.active.rawValue
 ) -> JournalEntryEntity {
   JournalEntryEntity(
     id: id,
@@ -208,6 +238,9 @@ private func makeEntity(
     imageAttachmentsData: (try? JSONEncoder().encode(imageAttachments)) ?? Data(),
     duration: duration,
     sourceRawValue: sourceRawValue,
-    isFavorite: isFavorite
+    isFavorite: isFavorite,
+    driftTypeRawValue: driftTypeRawValue,
+    aiVisibilityRawValue: aiVisibilityRawValue,
+    driftStatusRawValue: driftStatusRawValue
   )
 }

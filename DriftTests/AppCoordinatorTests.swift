@@ -105,7 +105,7 @@ struct AppCoordinatorTests {
   func fullScreenPaywallRouteAppearsForLimitUpgradePrompt() {
     let coordinator = AppCoordinator()
     let message =
-      "You've used today's 10 free entries. Come back tomorrow or upgrade for more daily entries."
+      "You've used today's 10 free Drifts. Come back tomorrow or upgrade for more daily Drifts."
 
     coordinator.showDriftPlusPaywall(reasonMessage: message)
 

@@ -30,6 +30,7 @@ final class EntryDetailViewModel {
   var editedTitle = ""
   var editedTranscript = ""
   var editedMood: Mood = .neutral
+  var editedDriftType: DriftType = .reflection
   var editedThemes: [JournalTheme] = []
   var editedCustomThemes: [CustomJournalTheme] = []
   var availableCustomThemes: [CustomJournalTheme] = []
@@ -68,6 +69,7 @@ final class EntryDetailViewModel {
     return editedTitle.trimmingCharacters(in: .whitespacesAndNewlines) != (entry.title ?? "")
       || editedTranscript.trimmingCharacters(in: .whitespacesAndNewlines) != entry.transcript
       || editedMood != (entry.mood ?? .neutral)
+      || editedDriftType != entry.driftType
       || editedThemes != entry.themes
       || editedCustomThemes != entry.customThemes
       || editedTags != entry.tags
@@ -83,7 +85,7 @@ final class EntryDetailViewModel {
     do {
       guard let loadedEntry = try await journalRepository.fetchEntry(id: entryID) else {
         entry = nil
-        errorMessage = "We could not find this entry."
+        errorMessage = "We could not find this Drift."
         isLoading = false
         return
       }
@@ -93,7 +95,7 @@ final class EntryDetailViewModel {
         seedEditState(from: loadedEntry)
       }
     } catch {
-      errorMessage = "We could not find this entry."
+      errorMessage = "We could not find this Drift."
     }
 
     isLoading = false
@@ -131,13 +133,13 @@ final class EntryDetailViewModel {
 
   func saveChanges() async -> Bool {
     guard let entry else {
-      errorMessage = "We could not find this entry."
+      errorMessage = "We could not find this Drift."
       return false
     }
 
     let transcript = editedTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !transcript.isEmpty else {
-      errorMessage = "An entry needs some text before it can be saved."
+      errorMessage = "A Drift needs some text before it can be saved."
       return false
     }
 
@@ -159,7 +161,10 @@ final class EntryDetailViewModel {
       duration: entry.duration,
       source: entry.source,
       isFavorite: entry.isFavorite,
-      imageAttachments: editedImageAttachments
+      imageAttachments: editedImageAttachments,
+      driftType: editedDriftType,
+      aiVisibility: entry.aiVisibility,
+      driftStatus: entry.driftStatus
     )
 
     do {
@@ -173,7 +178,7 @@ final class EntryDetailViewModel {
       return true
     } catch {
       isSaving = false
-      errorMessage = "We could not save your changes. Please try again."
+      errorMessage = "We could not save your Drift changes. Please try again."
       return false
     }
   }
@@ -191,7 +196,7 @@ final class EntryDetailViewModel {
       await imageAttachmentService.deleteAttachments(attachments)
       return true
     } catch {
-      errorMessage = "We could not delete this entry. Please try again."
+      errorMessage = "We could not delete this Drift. Please try again."
       return false
     }
   }
@@ -213,7 +218,10 @@ final class EntryDetailViewModel {
       duration: entry.duration,
       source: entry.source,
       isFavorite: !entry.isFavorite,
-      imageAttachments: entry.imageAttachments
+      imageAttachments: entry.imageAttachments,
+      driftType: entry.driftType,
+      aiVisibility: entry.aiVisibility,
+      driftStatus: entry.driftStatus
     )
 
     do {
@@ -221,7 +229,7 @@ final class EntryDetailViewModel {
       self.entry = updatedEntry
       return true
     } catch {
-      errorMessage = "We could not save your changes. Please try again."
+      errorMessage = "We could not save your Drift changes. Please try again."
       return false
     }
   }
@@ -319,6 +327,7 @@ final class EntryDetailViewModel {
     editedTitle = entry.title ?? ""
     editedTranscript = entry.transcript
     editedMood = entry.mood ?? .neutral
+    editedDriftType = entry.driftType
     editedThemes = entry.themes
     editedCustomThemes = entry.customThemes
     editedTags = entry.tags

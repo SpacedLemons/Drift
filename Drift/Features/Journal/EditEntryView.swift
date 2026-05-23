@@ -42,7 +42,7 @@ struct EditEntryView: View {
             Image(systemName: AppIcons.back)
           }
         )
-        .accessibilityLabel("Back to Entry Detail")
+        .accessibilityLabel("Back to Drift Detail")
       }
     }
     .confirmationDialog(
@@ -82,8 +82,8 @@ struct EditEntryView: View {
         .tint(AppColors.accent)
     } else if viewModel.entry == nil {
       EmptyStateView(
-        title: "Entry unavailable",
-        message: viewModel.errorMessage ?? "We could not find this entry.",
+        title: "Drift unavailable",
+        message: viewModel.errorMessage ?? "We could not find this Drift.",
         icon: AppIcons.waveform
       )
       .padding(AppSpacing.l)
@@ -108,7 +108,7 @@ struct EditEntryView: View {
     @Bindable var bindableViewModel = viewModel
 
     return VStack(alignment: .leading, spacing: AppSpacing.l) {
-      Text("Edit entry")
+      Text("Edit Drift")
         .font(AppTypography.appTitle)
         .foregroundStyle(AppColors.textPrimary)
         .accessibilityAddTraits(.isHeader)
@@ -157,6 +157,14 @@ struct EditEntryView: View {
       }
 
       VStack(alignment: .leading, spacing: AppSpacing.s) {
+        Text("Drift type")
+          .font(AppTypography.cardTitle)
+          .foregroundStyle(AppColors.textPrimary)
+
+        DriftTypeSelectionGrid(selection: $bindableViewModel.editedDriftType)
+      }
+
+      VStack(alignment: .leading, spacing: AppSpacing.s) {
         Text("Themes")
           .font(AppTypography.cardTitle)
           .foregroundStyle(AppColors.textPrimary)
@@ -184,7 +192,7 @@ struct EditEntryView: View {
 
       ImageAttachmentPickerSection(
         title: "Images",
-        subtitle: "Images are stored on this device with your journal entry.",
+        subtitle: "Images are stored on this device with your Drift.",
         attachments: viewModel.editedImageAttachments,
         imageAttachmentService: viewModel.imageAttachmentService,
         isProcessing: viewModel.isProcessingImages,

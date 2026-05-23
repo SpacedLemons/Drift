@@ -49,7 +49,7 @@ struct VoiceTranscriptionSettingsView: View {
       SettingsRow(
         icon: AppIcons.lockShield,
         title: "Speech permission",
-        subtitle: "Drift uses speech recognition to turn your voice journal entries into text.",
+        subtitle: "Drift uses speech recognition to turn your voice captures into text.",
         trailingValue: viewModel.speechPermissionStatusText
       )
 
@@ -58,7 +58,7 @@ struct VoiceTranscriptionSettingsView: View {
       SettingsRow(
         icon: AppIcons.mic,
         title: "Microphone permission",
-        subtitle: "Drift needs microphone access so you can record voice journal entries.",
+        subtitle: "Drift needs microphone access so you can record voice-first Drifts.",
         trailingValue: viewModel.microphonePermissionStatusText
       )
 
@@ -113,9 +113,9 @@ struct VoiceTranscriptionSettingsView: View {
   private var privacyCard: some View {
     SettingsInfoCard(
       icon: AppIcons.shield,
-      title: "Local-first voice journal",
+      title: "Local-first voice capture",
       message:
-        "Recordings are temporary before saving. Your journal remains on this device, and transcription uses Apple Speech."
+        "Recordings are temporary before saving. Your Drifts remain on this device, and transcription uses Apple Speech."
     )
   }
 }

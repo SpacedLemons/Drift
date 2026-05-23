@@ -33,11 +33,11 @@ struct DailyEntryLimitResult: Equatable, Sendable {
   var message: String {
     switch blockReason {
     case .freeLimitReached:
-      "You've used today's 10 free entries. Come back tomorrow or upgrade for more daily entries."
+      "You've used today's 10 free Drifts. Come back tomorrow or upgrade for more daily Drifts."
     case .plusLimitReached:
-      "You've reached today's entry limit. This helps keep Drift reliable."
+      "You've reached today's Drift limit. This helps keep Drift reliable."
     case nil:
-      "You can create a new entry."
+      "You can create a new Drift."
     }
   }
 
@@ -74,7 +74,7 @@ enum DailyEntryLimitError: Error, LocalizedError, Sendable {
   var errorDescription: String? {
     switch self {
     case .calculationFailed:
-      "We couldn't check today's entry limit. Please try again."
+      "We couldn't check today's Drift limit. Please try again."
     }
   }
 }

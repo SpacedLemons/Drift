@@ -13,6 +13,8 @@ struct AppShellView: View {
   let launchActionStore: AppLaunchActionStore
 
   @State private var journalHomeViewModel: JournalHomeViewModel
+  @State private var spacesViewModel: SpacesViewModel
+  @State private var contextPacksViewModel: ContextPacksViewModel
   @State private var captureCoordinator: CaptureCoordinator
   @State private var settingsCoordinator: SettingsCoordinator
   @State private var selectedTab: AppTab = .journal
@@ -31,6 +33,14 @@ struct AppShellView: View {
     _journalHomeViewModel = State(
       initialValue: JournalHomeViewModel(
         journalRepository: environment.dependencies.journalRepository
+      )
+    )
+    _spacesViewModel = State(initialValue: SpacesViewModel())
+    _contextPacksViewModel = State(
+      initialValue: ContextPacksViewModel(
+        driftRepository: environment.dependencies.driftRepository,
+        contextPackService: environment.dependencies.contextPackService,
+        contextExportService: environment.dependencies.contextExportService
       )
     )
     _captureCoordinator = State(
@@ -100,6 +110,15 @@ struct AppShellView: View {
       .tag(AppTab.journal)
 
       NavigationStack {
+        SpacesView(
+          viewModel: spacesViewModel,
+          contextPacksViewModel: contextPacksViewModel
+        )
+      }
+      .tabItem { AppTab.spaces.label }
+      .tag(AppTab.spaces)
+
+      NavigationStack {
         InsightsView(
           viewModel: InsightsViewModel(
             journalRepository: environment.dependencies.journalRepository
@@ -159,7 +178,7 @@ struct AppShellView: View {
       Text(launchActionStore.routingErrorMessage ?? "")
     }
     .alert(
-      "Entry Limit",
+      "Drift Limit",
       isPresented: Binding(
         get: { entryLimitAlert != nil },
         set: { if !$0 { entryLimitAlert = nil } }

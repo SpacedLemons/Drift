@@ -90,7 +90,7 @@ struct SettingsViewModelTests {
     let didDelete = await viewModel.deleteAllEntries()
 
     #expect(!didDelete)
-    #expect(viewModel.errorMessage == "We could not delete your entries. Please try again.")
+    #expect(viewModel.errorMessage == "We could not delete your Drifts. Please try again.")
     #expect(!viewModel.isDeletingAllEntries)
   }
 
@@ -181,7 +181,7 @@ struct SettingsViewModelTests {
 
     #expect(fileURL == nil)
     #expect(viewModel.exportShareItem == nil)
-    #expect(viewModel.errorMessage == "There are no entries to export yet.")
+    #expect(viewModel.errorMessage == "There are no Drifts to export yet.")
     #expect(!viewModel.isExportingEntries)
     verify(exportService)
       .export(entries: .any, exportedAt: .any).called(.never)

@@ -51,13 +51,13 @@ struct SettingsView: View {
     }
     .navigationTitle("Settings")
     .alert(
-      "Delete all entries?",
+      "Delete all Drifts?",
       isPresented: $isShowingDeleteAllConfirmation
     ) {
       Button(role: .destructive) {
         deleteAllEntries()
       } label: {
-        Text("Delete All Entries")
+        Text("Delete All Drifts")
       }
 
       Button(role: .cancel) {
@@ -65,7 +65,7 @@ struct SettingsView: View {
         Text("Cancel")
       }
     } message: {
-      Text("This will remove your journal entries from this device.")
+      Text("This will remove your Drifts from this device.")
     }
     .sheet(item: $bindableViewModel.exportShareItem) { exportItem in
       ActivityView(activityItems: [exportItem.url])
@@ -90,7 +90,7 @@ struct SettingsView: View {
         SettingsNavigationRow(
           icon: AppIcons.sparkles,
           title: viewModel.entitlement.isPremium ? "Drift Plus active" : "Upgrade to Drift Plus",
-          subtitle: "Existing entries always stay yours.",
+          subtitle: "Existing Drifts always stay yours.",
           trailingValue: viewModel.entitlement.tier.displayName,
           action: onShowPaywall
         )
@@ -115,24 +115,24 @@ struct SettingsView: View {
       SettingsSectionCard(title: "Data") {
         SettingsNavigationRow(
           icon: AppIcons.share,
-          title: viewModel.isExportingEntries ? "Preparing Export" : "Export All Entries",
+          title: viewModel.isExportingEntries ? "Preparing Export" : "Export All Drifts",
           subtitle: viewModel.exportPrivacyMessage,
           action: exportAllEntries
         )
         .disabled(viewModel.isExportingEntries)
-        .accessibilityLabel("Export all entries")
+        .accessibilityLabel("Export all Drifts")
         .accessibilityHint("Creates a local Markdown file and opens sharing options.")
 
         Divider().overlay(AppColors.border)
 
         SettingsDestructiveRow(
           icon: AppIcons.trash,
-          title: viewModel.isDeletingAllEntries ? "Deleting Entries" : "Delete All Entries",
-          subtitle: "Remove journal entries from this device.",
+          title: viewModel.isDeletingAllEntries ? "Deleting Drifts" : "Delete All Drifts",
+          subtitle: "Remove Drifts from this device.",
           action: showDeleteAllConfirmation
         )
         .disabled(viewModel.isDeletingAllEntries)
-        .accessibilityLabel("Delete all entries")
+        .accessibilityLabel("Delete all Drifts")
       }
 
       SettingsSectionCard(title: "Privacy") {
@@ -202,8 +202,8 @@ struct SettingsView: View {
 
           SettingsToggleRow(
             icon: AppIcons.warning,
-            title: "Simulate free entry limit reached",
-            subtitle: "Blocks new Free entries and opens the Drift Plus paywall.",
+            title: "Simulate free Drift limit reached",
+            subtitle: "Blocks new Free Drifts and opens the Drift Plus paywall.",
             isOn: Binding(
               get: { viewModel.debugEntitlementSettings.simulateFreeEntryLimitReached },
               set: { isEnabled in
@@ -216,8 +216,8 @@ struct SettingsView: View {
 
           SettingsToggleRow(
             icon: AppIcons.warning,
-            title: "Simulate Plus entry limit reached",
-            subtitle: "Blocks new Plus entries with the reliability limit message.",
+            title: "Simulate Plus Drift limit reached",
+            subtitle: "Blocks new Plus Drifts with the reliability limit message.",
             isOn: Binding(
               get: { viewModel.debugEntitlementSettings.simulatePlusEntryLimitReached },
               set: { isEnabled in

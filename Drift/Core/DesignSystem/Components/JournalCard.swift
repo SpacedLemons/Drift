@@ -34,7 +34,7 @@ struct JournalCard: View {
           Image(systemName: AppIcons.favorite)
             .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(AppColors.warmAccent)
-            .accessibilityLabel("Favorite entry")
+            .accessibilityLabel("Favorite Drift")
         }
       }
 
@@ -46,6 +46,14 @@ struct JournalCard: View {
 
       HStack(spacing: AppSpacing.xs) {
         MoodPill(mood: entry.mood)
+
+        Label(entry.driftType.displayName, systemImage: entry.driftType.symbolName)
+          .font(AppTypography.caption)
+          .foregroundStyle(AppColors.textSecondary)
+          .padding(.horizontal, AppSpacing.s)
+          .padding(.vertical, AppSpacing.xs)
+          .background(AppColors.surfaceRaised, in: Capsule())
+          .lineLimit(1)
 
         ForEach(entry.themes.prefix(2)) { theme in
           Label(theme.displayName, systemImage: AppIcons.tag)

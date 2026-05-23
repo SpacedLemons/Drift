@@ -320,7 +320,7 @@ struct JournalHomeViewModelTests {
     await viewModel.load()
 
     #expect(viewModel.visibleEntries.isEmpty)
-    #expect(viewModel.errorMessage == "We could not load your journal.")
+    #expect(viewModel.errorMessage == "We could not load your Drifts.")
   }
 }
 

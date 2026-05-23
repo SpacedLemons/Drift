@@ -24,7 +24,7 @@ enum BackupServiceError: LocalizedError, Equatable {
     case .backupFailed:
       "We could not complete the backup. Please try again."
     case .restoreFailed:
-      "We could not restore your journal. Please try again."
+      "We could not restore your Drifts. Please try again."
     case .noBackupFound:
       "No Drift backup was found in iCloud."
     case .notImplemented:

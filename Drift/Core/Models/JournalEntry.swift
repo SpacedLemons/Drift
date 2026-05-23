@@ -22,6 +22,9 @@ struct JournalEntry: Identifiable, Hashable, Codable, Sendable {
   var source: EntrySource
   var isFavorite: Bool
   var imageAttachments: [JournalImageAttachment]
+  var driftType: DriftType
+  var aiVisibility: AIVisibility
+  var driftStatus: DriftStatus
 
   init(
     id: UUID = UUID(),
@@ -37,7 +40,10 @@ struct JournalEntry: Identifiable, Hashable, Codable, Sendable {
     duration: TimeInterval? = nil,
     source: EntrySource = .voice,
     isFavorite: Bool = false,
-    imageAttachments: [JournalImageAttachment] = []
+    imageAttachments: [JournalImageAttachment] = [],
+    driftType: DriftType = .reflection,
+    aiVisibility: AIVisibility = .privateLocalOnly,
+    driftStatus: DriftStatus = .active
   ) {
     self.id = id
     self.createdAt = createdAt
@@ -53,6 +59,9 @@ struct JournalEntry: Identifiable, Hashable, Codable, Sendable {
     self.source = source
     self.isFavorite = isFavorite
     self.imageAttachments = imageAttachments
+    self.driftType = driftType
+    self.aiVisibility = aiVisibility
+    self.driftStatus = driftStatus
   }
 
   var displayTitle: String {
@@ -65,7 +74,7 @@ struct JournalEntry: Identifiable, Hashable, Codable, Sendable {
       .components(separatedBy: .newlines)
       .first?
       .trimmingCharacters(in: .whitespacesAndNewlines)
-      .nonEmpty ?? "Journal entry"
+      .nonEmpty ?? "\(driftType.displayName) Drift"
   }
 
   var previewText: String {

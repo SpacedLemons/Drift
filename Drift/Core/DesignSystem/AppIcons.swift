@@ -34,6 +34,8 @@ enum AppIcons {
   static let sparkles = "sparkles"
   static let success = "checkmark.circle.fill"
   static let book = "book"
+  static let spaces = "square.grid.2x2"
+  static let contextPack = "rectangle.stack"
   static let chart = "chart.bar"
   static let settings = "gearshape"
   static let bell = "bell"

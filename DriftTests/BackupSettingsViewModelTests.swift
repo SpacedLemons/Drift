@@ -81,7 +81,7 @@ struct BackupSettingsViewModelTests {
     await viewModel.load()
     await viewModel.restoreJournal()
 
-    #expect(viewModel.successMessage == "Restore complete. Existing entries stayed on this device.")
+    #expect(viewModel.successMessage == "Restore complete. Existing Drifts stayed on this device.")
     #expect(await service.restoreCallCount() == 1)
   }
 

@@ -28,7 +28,7 @@ final class SettingsViewModel {
 
   let exportPrivacyMessage =
     "Exports are created locally. You choose where to save or share them."
-  let emptyExportMessage = "There are no entries to export yet."
+  let emptyExportMessage = "There are no Drifts to export yet."
 
   private(set) var entitlement: SubscriptionEntitlement = .free
   #if DEBUG
@@ -45,7 +45,7 @@ final class SettingsViewModel {
         route: .reminders,
         icon: AppIcons.bell,
         title: "Reminder Settings",
-        subtitle: "Local journal nudges",
+        subtitle: "Local capture nudges",
         trailingValue: "Local"
       ),
       SettingsNavigationRowDescriptor(
@@ -136,7 +136,7 @@ final class SettingsViewModel {
       await imageAttachmentService.deleteAttachments(entries.flatMap(\.imageAttachments))
       return true
     } catch {
-      errorMessage = "We could not delete your entries. Please try again."
+      errorMessage = "We could not delete your Drifts. Please try again."
       return false
     }
   }

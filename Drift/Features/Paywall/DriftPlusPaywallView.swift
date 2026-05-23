@@ -96,7 +96,7 @@ struct DriftPlusPaywallView: View {
         .accessibilityAddTraits(.isHeader)
 
       Text(
-        "More room for daily journaling today, with Plus features ready to grow over time. Your entries stay on this device."
+        "More room for daily capture today, with Plus features ready to grow over time. Your Drifts stay on this device."
       )
       .font(AppTypography.body)
       .foregroundStyle(AppColors.textSecondary)
@@ -112,8 +112,8 @@ struct DriftPlusPaywallView: View {
 
       PaywallFeatureCard(
         icon: AppIcons.mic,
-        title: "Up to 100 entries per day",
-        subtitle: "A higher daily protection limit for heavier journaling days."
+        title: "Up to 100 Drifts per day",
+        subtitle: "A higher daily protection limit for heavier capture days."
       )
 
       Text("Coming to Drift Plus")
@@ -131,7 +131,7 @@ struct DriftPlusPaywallView: View {
       ) {
         PaywallBenefitPill(icon: AppIcons.waveform, title: "Enhanced transcription")
         PaywallBenefitPill(icon: AppIcons.sparkles, title: "AI reflections")
-        PaywallBenefitPill(icon: AppIcons.question, title: "Ask your journal")
+        PaywallBenefitPill(icon: AppIcons.question, title: "Ask your Drifts")
         PaywallBenefitPill(icon: AppIcons.paintPalette, title: "Theme builder")
         PaywallBenefitPill(icon: AppIcons.share, title: "Premium exports")
         PaywallBenefitPill(icon: AppIcons.lockShield, title: "Optional iCloud backup")
@@ -223,12 +223,12 @@ struct DriftPlusPaywallView: View {
 
   private var reassuranceSection: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Label("Existing entries always stay yours.", systemImage: AppIcons.lockShield)
+      Label("Existing Drifts always stay yours.", systemImage: AppIcons.lockShield)
         .font(AppTypography.bodyEmphasis)
         .foregroundStyle(AppColors.textPrimary)
 
       Text(
-        "Subscription status only changes future Plus access. Existing local entries remain readable, editable, and exportable."
+        "Subscription status only changes future Plus access. Existing local Drifts remain readable, editable, and exportable."
       )
       .font(AppTypography.caption)
       .foregroundStyle(AppColors.textSecondary)
@@ -262,7 +262,7 @@ struct DriftPlusPaywallView: View {
       .background(AppColors.accent, in: RoundedRectangle(cornerRadius: 16))
       .disabled(viewModel.isPurchaseInFlight)
 
-      Text("Existing entries always stay yours.")
+      Text("Existing Drifts always stay yours.")
         .font(AppTypography.caption)
         .foregroundStyle(AppColors.textTertiary)
     }
@@ -477,7 +477,7 @@ extension SubscriptionProduct.Plan {
     viewModel: DriftPlusPaywallViewModel(
       subscriptionService: DisabledSubscriptionService(),
       reasonMessage:
-        "You've used today's 10 free entries. Come back tomorrow or upgrade for more daily entries."
+        "You've used today's 10 free Drifts. Come back tomorrow or upgrade for more daily Drifts."
     )
   )
 }

@@ -21,7 +21,7 @@ enum TranscriptionError: Error, Equatable, LocalizedError, Sendable {
   var errorDescription: String? {
     switch self {
     case .permissionDenied:
-      "Drift uses speech recognition to turn your voice journal entries into text. You can enable it in Settings."
+      "Drift uses speech recognition to turn your voice captures into text. You can enable it in Settings."
     case .permissionRestricted:
       "Speech recognition is restricted on this device."
     case .recognizerUnavailable:
@@ -31,11 +31,11 @@ enum TranscriptionError: Error, Equatable, LocalizedError, Sendable {
     case .transcriptionFailed:
       "We could not transcribe this recording. You can try again or type it manually."
     case .emptyResult:
-      "We couldn't hear anything clearly. You can try again or write the entry manually."
+      "We couldn't hear anything clearly. You can try again or write the Drift manually."
     case .unsupportedLocale:
       "Speech recognition is unavailable for this language."
     case .missingAudioFile:
-      "We could not find this recording. You can try again or type the entry manually."
+      "We could not find this recording. You can try again or type the Drift manually."
     case .cleanupFailed:
       "We could not delete the temporary audio file."
     }

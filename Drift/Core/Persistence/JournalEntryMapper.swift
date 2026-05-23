@@ -23,7 +23,10 @@ enum JournalEntryMapper {
       imageAttachmentsData: try encode(entry.imageAttachments),
       duration: entry.duration,
       sourceRawValue: entry.source.rawValue,
-      isFavorite: entry.isFavorite
+      isFavorite: entry.isFavorite,
+      driftTypeRawValue: entry.driftType.rawValue,
+      aiVisibilityRawValue: entry.aiVisibility.rawValue,
+      driftStatusRawValue: entry.driftStatus.rawValue
     )
   }
 
@@ -41,6 +44,9 @@ enum JournalEntryMapper {
     entity.duration = entry.duration
     entity.sourceRawValue = entry.source.rawValue
     entity.isFavorite = entry.isFavorite
+    entity.driftTypeRawValue = entry.driftType.rawValue
+    entity.aiVisibilityRawValue = entry.aiVisibility.rawValue
+    entity.driftStatusRawValue = entry.driftStatus.rawValue
   }
 
   static func model(from entity: JournalEntryEntity) -> JournalEntry {
@@ -61,7 +67,10 @@ enum JournalEntryMapper {
       duration: entity.duration,
       source: EntrySource(rawValue: entity.sourceRawValue) ?? .voice,
       isFavorite: entity.isFavorite,
-      imageAttachments: decode([JournalImageAttachment].self, from: entity.imageAttachmentsData)
+      imageAttachments: decode([JournalImageAttachment].self, from: entity.imageAttachmentsData),
+      driftType: driftType(from: entity.driftTypeRawValue),
+      aiVisibility: aiVisibility(from: entity.aiVisibilityRawValue),
+      driftStatus: driftStatus(from: entity.driftStatusRawValue)
     )
   }
 
@@ -84,5 +93,20 @@ enum JournalEntryMapper {
   private static func mood(from rawValue: String?) -> Mood? {
     guard let rawValue else { return nil }
     return Mood(rawValue: rawValue) ?? .unknown
+  }
+
+  private static func driftType(from rawValue: String?) -> DriftType {
+    guard let rawValue else { return .reflection }
+    return DriftType(rawValue: rawValue) ?? .reflection
+  }
+
+  private static func aiVisibility(from rawValue: String?) -> AIVisibility {
+    guard let rawValue else { return .privateLocalOnly }
+    return AIVisibility(rawValue: rawValue) ?? .privateLocalOnly
+  }
+
+  private static func driftStatus(from rawValue: String?) -> DriftStatus {
+    guard let rawValue else { return .active }
+    return DriftStatus(rawValue: rawValue) ?? .active
   }
 }

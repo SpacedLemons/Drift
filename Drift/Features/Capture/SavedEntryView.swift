@@ -27,14 +27,16 @@ struct SavedEntryView: View {
           .shadow(color: AppColors.accentSecondary.opacity(0.24), radius: 22, y: 10)
 
         VStack(spacing: AppSpacing.s) {
-          Text("Entry saved")
+          Text("Drift saved")
             .font(AppTypography.appTitle)
             .foregroundStyle(AppColors.textPrimary)
 
-          Text("Your journal entry is stored locally on this device.")
-            .font(AppTypography.body)
-            .foregroundStyle(AppColors.textSecondary)
-            .multilineTextAlignment(.center)
+          Text(
+            "Your \(viewModel.entry.driftType.displayName.lowercased()) Drift is stored locally on this device."
+          )
+          .font(AppTypography.body)
+          .foregroundStyle(AppColors.textSecondary)
+          .multilineTextAlignment(.center)
         }
 
         VStack(spacing: AppSpacing.s) {
@@ -43,7 +45,7 @@ struct SavedEntryView: View {
               onViewEntry()
             },
             label: {
-              Label("View Entry", systemImage: AppIcons.chevronRight)
+              Label("View Drift", systemImage: AppIcons.chevronRight)
                 .frame(maxWidth: .infinity)
             }
           )
@@ -67,7 +69,7 @@ struct SavedEntryView: View {
               onBackToJournal()
             },
             label: {
-              Text("Back to Journal")
+              Text("Back to Timeline")
             }
           )
           .buttonStyle(.plain)

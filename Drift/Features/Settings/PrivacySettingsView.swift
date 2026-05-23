@@ -19,13 +19,13 @@ struct PrivacySettingsView: View {
             icon: AppIcons.lockShield,
             title: "Local by default",
             message:
-              "Your entries are stored on this device. Drift works offline, no account is required, and no cloud sync is used."
+              "Your Drifts are stored on this device. Drift works offline, no account is required, and no cloud sync is used."
           )
 
           SettingsInfoCard(
             icon: AppIcons.photo,
             title: "Images",
-            message: "Images are stored on this device with your journal entry."
+            message: "Images are stored on this device with your Drift."
           )
 
           SettingsInfoCard(

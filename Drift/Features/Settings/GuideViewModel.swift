@@ -19,7 +19,7 @@ final class GuideViewModel {
     GuideAnnotation(
       icon: AppIcons.mic,
       title: "Record",
-      message: "Tap the microphone to capture a voice journal entry."
+      message: "Tap the microphone to capture a voice-first Drift."
     ),
     GuideAnnotation(
       icon: AppIcons.checkmark,
@@ -29,12 +29,12 @@ final class GuideViewModel {
     GuideAnnotation(
       icon: AppIcons.tag,
       title: "Themes",
-      message: "Use built-in themes, custom themes, and tags to keep entries easy to find."
+      message: "Use built-in themes, custom themes, and tags to keep Drifts easy to find."
     ),
     GuideAnnotation(
       icon: AppIcons.calendar,
       title: "Calendar",
-      message: "Expand the calendar on Journal Home to browse older local entries."
+      message: "Expand the calendar on the Timeline to browse older local Drifts."
     ),
     GuideAnnotation(
       icon: AppIcons.bell,
@@ -44,12 +44,12 @@ final class GuideViewModel {
     GuideAnnotation(
       icon: AppIcons.lockShield,
       title: "Privacy",
-      message: "Entries stay on this device. No account is required."
+      message: "Drifts stay on this device. No account is required."
     ),
     GuideAnnotation(
       icon: AppIcons.photo,
       title: "Images",
-      message: "Images are stored on this device with your journal entry."
+      message: "Images are stored on this device with your Drift."
     ),
   ]
 

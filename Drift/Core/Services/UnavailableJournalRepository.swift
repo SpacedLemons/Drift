@@ -17,19 +17,19 @@ final class UnavailableJournalRepository: JournalRepository, Sendable {
   }
 
   func saveEntry(_ entry: JournalEntry) async throws {
-    throw DriftServiceError.unavailable("Local journal persistence is not wired yet.")
+    throw DriftServiceError.unavailable("Local Drift persistence is not wired yet.")
   }
 
   func updateEntry(_ entry: JournalEntry) async throws {
-    throw DriftServiceError.unavailable("Local journal persistence is not wired yet.")
+    throw DriftServiceError.unavailable("Local Drift persistence is not wired yet.")
   }
 
   func deleteEntry(id: UUID) async throws {
-    throw DriftServiceError.unavailable("Local journal persistence is not wired yet.")
+    throw DriftServiceError.unavailable("Local Drift persistence is not wired yet.")
   }
 
   func deleteAllEntries() async throws {
-    throw DriftServiceError.unavailable("Local journal persistence is not wired yet.")
+    throw DriftServiceError.unavailable("Local Drift persistence is not wired yet.")
   }
 
   func searchEntries(query: String) async throws -> [JournalEntry] {

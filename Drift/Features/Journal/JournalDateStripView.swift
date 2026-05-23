@@ -332,7 +332,7 @@ private struct CalendarDayCell: View {
   private var accessibilityValue: String {
     [
       day.isSelected ? "Selected" : nil,
-      day.hasEntries ? "Has entries" : "No entries",
+      day.hasEntries ? "Has Drifts" : "No Drifts",
       day.isToday ? "Today" : nil,
     ]
     .compactMap { $0 }

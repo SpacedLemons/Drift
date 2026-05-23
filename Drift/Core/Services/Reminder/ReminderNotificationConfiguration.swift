@@ -49,7 +49,7 @@ enum ReminderNotificationAction: String, CaseIterable, Identifiable, Sendable {
 
   var title: String {
     switch self {
-    case .noteJournalEntry: "Note journal entry"
+    case .noteJournalEntry: "Capture a Drift"
     case .remindLater: "Remind me later"
     case .dismiss: "Not now"
     }

@@ -29,6 +29,7 @@ final class ReviewEntryViewModel {
   private var playbackTimerTask: Task<Void, Never>?
 
   var transcript: String
+  var selectedDriftType: DriftType
   var selectedMood: Mood
   var selectedThemes: [JournalTheme]
   var selectedCustomThemes: [CustomJournalTheme]
@@ -65,6 +66,7 @@ final class ReviewEntryViewModel {
     self.dailyEntryLimitService = dailyEntryLimitService
     self.fileManager = fileManager
     transcript = draft.transcript
+    selectedDriftType = .reflection
     selectedMood = draft.suggestedMood
     selectedThemes = draft.suggestedThemes
     selectedCustomThemes = []
@@ -98,6 +100,10 @@ final class ReviewEntryViewModel {
 
   func selectMood(_ mood: Mood) {
     selectedMood = mood
+  }
+
+  func selectDriftType(_ driftType: DriftType) {
+    selectedDriftType = driftType
   }
 
   func toggleTheme(_ theme: JournalTheme) {
@@ -287,7 +293,10 @@ final class ReviewEntryViewModel {
       tags: tags,
       duration: draft.duration,
       source: .voice,
-      imageAttachments: imageAttachments
+      imageAttachments: imageAttachments,
+      driftType: selectedDriftType,
+      aiVisibility: .privateLocalOnly,
+      driftStatus: .active
     )
 
     do {
@@ -297,7 +306,7 @@ final class ReviewEntryViewModel {
       return entry
     } catch {
       isSaving = false
-      errorMessage = "We could not save this entry. Please try again."
+      errorMessage = "We could not save this Drift. Please try again."
       return nil
     }
   }
@@ -309,7 +318,9 @@ final class ReviewEntryViewModel {
       .first?
       .trimmingCharacters(in: .whitespacesAndNewlines)
 
-    guard let firstSentence, !firstSentence.isEmpty else { return "Voice journal" }
+    guard let firstSentence, !firstSentence.isEmpty else {
+      return "\(selectedDriftType.displayName) Drift"
+    }
     return String(firstSentence.prefix(48))
   }
 

@@ -24,6 +24,9 @@ final class JournalEntryEntity {
   var duration: TimeInterval?
   var sourceRawValue: String
   var isFavorite: Bool
+  var driftTypeRawValue: String?
+  var aiVisibilityRawValue: String?
+  var driftStatusRawValue: String?
 
   init(
     id: UUID,
@@ -39,7 +42,10 @@ final class JournalEntryEntity {
     imageAttachmentsData: Data = Data(),
     duration: TimeInterval?,
     sourceRawValue: String,
-    isFavorite: Bool
+    isFavorite: Bool,
+    driftTypeRawValue: String? = nil,
+    aiVisibilityRawValue: String? = nil,
+    driftStatusRawValue: String? = nil
   ) {
     self.id = id
     self.createdAt = createdAt
@@ -55,5 +61,8 @@ final class JournalEntryEntity {
     self.duration = duration
     self.sourceRawValue = sourceRawValue
     self.isFavorite = isFavorite
+    self.driftTypeRawValue = driftTypeRawValue
+    self.aiVisibilityRawValue = aiVisibilityRawValue
+    self.driftStatusRawValue = driftStatusRawValue
   }
 }

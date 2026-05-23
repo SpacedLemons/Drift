@@ -52,7 +52,7 @@ struct DailyEntryLimitServiceTests {
     #expect(result.shouldOfferUpgrade)
     #expect(
       result.message
-        == "You've used today's 10 free entries. Come back tomorrow or upgrade for more daily entries."
+        == "You've used today's 10 free Drifts. Come back tomorrow or upgrade for more daily Drifts."
     )
   }
 
@@ -90,7 +90,7 @@ struct DailyEntryLimitServiceTests {
     #expect(!result.canCreateEntry)
     #expect(result.blockReason == .plusLimitReached)
     #expect(!result.shouldOfferUpgrade)
-    #expect(result.message == "You've reached today's entry limit. This helps keep Drift reliable.")
+    #expect(result.message == "You've reached today's Drift limit. This helps keep Drift reliable.")
   }
 
   @Test

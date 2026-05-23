@@ -28,6 +28,6 @@ struct FloatingRecordButton: View {
       }
     )
     .buttonStyle(.plain)
-    .accessibilityLabel("Record journal entry")
+    .accessibilityLabel("Record Drift")
   }
 }

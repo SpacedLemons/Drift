@@ -20,7 +20,7 @@ enum AudioRecordingError: Error, Equatable, LocalizedError, Sendable {
   var errorDescription: String? {
     switch self {
     case .permissionDenied:
-      "Drift needs microphone access so you can record voice journal entries. You can enable it in Settings."
+      "Drift needs microphone access so you can record voice-first Drifts. You can enable it in Settings."
     case .permissionUnavailable:
       "Microphone recording is not available on this device."
     case .sessionConfigurationFailed:

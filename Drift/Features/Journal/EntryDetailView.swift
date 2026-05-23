@@ -49,7 +49,7 @@ struct EntryDetailView: View {
             Image(systemName: AppIcons.back)
           }
         )
-        .accessibilityLabel("Back to Journal")
+        .accessibilityLabel("Back to Timeline")
       }
 
       ToolbarItemGroup(placement: .topBarTrailing) {
@@ -69,11 +69,11 @@ struct EntryDetailView: View {
         )
         .disabled(viewModel.entry == nil)
         .accessibilityLabel(
-          viewModel.entry?.isFavorite == true ? "Remove favorite" : "Favorite entry")
+          viewModel.entry?.isFavorite == true ? "Remove favorite" : "Favorite Drift")
       }
     }
     .confirmationDialog(
-      "Delete this entry?",
+      "Delete this Drift?",
       isPresented: $isShowingDeleteConfirmation,
       titleVisibility: .visible
     ) {
@@ -87,7 +87,7 @@ struct EntryDetailView: View {
           }
         },
         label: {
-          Text("Delete Entry")
+          Text("Delete Drift")
         }
       )
 
@@ -113,8 +113,8 @@ struct EntryDetailView: View {
         .tint(AppColors.accent)
     } else if viewModel.entry == nil {
       EmptyStateView(
-        title: "Entry unavailable",
-        message: viewModel.errorMessage ?? "We could not find this entry.",
+        title: "Drift unavailable",
+        message: viewModel.errorMessage ?? "We could not find this Drift.",
         icon: AppIcons.waveform
       )
       .padding(AppSpacing.l)
@@ -169,7 +169,7 @@ struct EntryDetailView: View {
               removeAttachment: nil
             )
 
-            Text("Images are stored on this device with your journal entry.")
+            Text("Images are stored on this device with your Drift.")
               .font(AppTypography.caption)
               .foregroundStyle(AppColors.textTertiary)
           }
@@ -178,7 +178,7 @@ struct EntryDetailView: View {
 
       detailCard(title: "Notes", icon: AppIcons.sparkles) {
         Text(
-          "Summary and notes will be added later. Drift is using local journal details only for now."
+          "Context notes will be added later. Drift is using local details only for now."
         )
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
@@ -192,6 +192,14 @@ struct EntryDetailView: View {
   private func detailMeta(_ entry: JournalEntry) -> some View {
     FlowLayout(spacing: AppSpacing.xs) {
       MoodPill(mood: entry.mood)
+
+      Label(entry.driftType.displayName, systemImage: entry.driftType.symbolName)
+        .font(AppTypography.caption)
+        .foregroundStyle(AppColors.textSecondary)
+        .padding(.horizontal, AppSpacing.s)
+        .padding(.vertical, AppSpacing.xs)
+        .background(AppColors.surfaceRaised, in: Capsule())
+        .accessibilityLabel("Drift type \(entry.driftType.displayName)")
 
       if let durationText = viewModel.durationText {
         Label(durationText, systemImage: AppIcons.clock)
@@ -250,10 +258,10 @@ struct EntryDetailView: View {
           onEditRequested()
         },
         label: {
-          detailActionLabel("Edit Entry", icon: AppIcons.pencil)
+          detailActionLabel("Edit Drift", icon: AppIcons.pencil)
         }
       )
-      .accessibilityLabel("Edit entry")
+      .accessibilityLabel("Edit Drift")
 
       Button(
         role: .destructive,
@@ -261,10 +269,10 @@ struct EntryDetailView: View {
           isShowingDeleteConfirmation = true
         },
         label: {
-          detailActionLabel("Delete Entry", icon: AppIcons.trash)
+          detailActionLabel("Delete Drift", icon: AppIcons.trash)
         }
       )
-      .accessibilityLabel("Delete entry")
+      .accessibilityLabel("Delete Drift")
     }
     .buttonStyle(.plain)
   }
