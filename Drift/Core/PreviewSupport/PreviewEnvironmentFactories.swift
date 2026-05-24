@@ -32,7 +32,9 @@ extension AppDependencyContainer {
       imageAttachmentService: PreviewImageAttachmentService(),
       guideService: PreviewGuideService(),
       exportService: LocalMarkdownExportService(),
-      backupService: PreviewBackupService()
+      backupService: PreviewBackupService(),
+      userIdentityService: PreviewUserIdentityService(),
+      chatGPTConnectionService: LocalChatGPTConnectionService()
     )
   }
 }

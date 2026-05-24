@@ -19,6 +19,8 @@ final class SettingsViewModel {
   private let exportService: any ExportService & Sendable
   @ObservationIgnored
   private let imageAttachmentService: any ImageAttachmentService & Sendable
+  @ObservationIgnored
+  private let userIdentityService: any UserIdentityService & Sendable
   #if DEBUG
     @ObservationIgnored
     private let debugEntitlementOverrideStore = DebugEntitlementOverrideStore()
@@ -31,6 +33,7 @@ final class SettingsViewModel {
   let emptyExportMessage = "There are no Drifts to export yet."
 
   private(set) var entitlement: SubscriptionEntitlement = .free
+  private(set) var localIdentityStatus: LocalIdentityStatus = .unknown
   #if DEBUG
     private(set) var debugEntitlementSettings: DebugEntitlementOverrideSettings = .default
   #endif
@@ -41,6 +44,13 @@ final class SettingsViewModel {
 
   var navigationRows: [SettingsNavigationRowDescriptor] {
     [
+      SettingsNavigationRowDescriptor(
+        route: .chatGPTConnection,
+        icon: AppIcons.sparkles,
+        title: "ChatGPT Connection",
+        subtitle: "Choose what Drift can share with ChatGPT",
+        trailingValue: "Future"
+      ),
       SettingsNavigationRowDescriptor(
         route: .reminders,
         icon: AppIcons.bell,
@@ -102,16 +112,20 @@ final class SettingsViewModel {
     subscriptionService: any SubscriptionService & Sendable,
     exportService: any ExportService & Sendable,
     imageAttachmentService: any ImageAttachmentService & Sendable = PreviewImageAttachmentService(),
+    userIdentityService: any UserIdentityService & Sendable = PreviewUserIdentityService(),
     now: @escaping () -> Date = Date.init
   ) {
     self.journalRepository = journalRepository
     self.subscriptionService = subscriptionService
     self.exportService = exportService
     self.imageAttachmentService = imageAttachmentService
+    self.userIdentityService = userIdentityService
     self.now = now
   }
 
   func load() async {
+    loadLocalIdentity()
+
     #if DEBUG
       debugEntitlementSettings = await debugEntitlementOverrideStore.loadSettings()
     #endif
@@ -175,7 +189,62 @@ final class SettingsViewModel {
     errorMessage = nil
   }
 
+  var localIdentityTitle: String {
+    "Local Identity"
+  }
+
+  var localIdentitySubtitle: String {
+    switch localIdentityStatus {
+    case .unknown:
+      "Created automatically for this device"
+    case .ready:
+      "Created automatically for this device"
+    case .unavailable:
+      "Could not confirm the hidden identity"
+    }
+  }
+
+  var localIdentityTrailingValue: String {
+    switch localIdentityStatus {
+    case .unknown: "Checking"
+    case .ready: "Ready"
+    case .unavailable: "Unavailable"
+    }
+  }
+
   #if DEBUG
+    var debugLocalIdentityCreatedAtText: String {
+      switch localIdentityStatus {
+      case .ready(let createdAt):
+        "Created \(Self.identityDateFormatter.string(from: createdAt))"
+      case .unknown:
+        "Not loaded yet"
+      case .unavailable:
+        "Unavailable"
+      }
+    }
+  #endif
+
+  private func loadLocalIdentity() {
+    do {
+      let identity = try userIdentityService.currentIdentity()
+      localIdentityStatus = .ready(createdAt: identity.createdAt)
+    } catch {
+      localIdentityStatus = .unavailable
+    }
+  }
+
+  #if DEBUG
+    func resetLocalIdentityForDebugOnly() {
+      do {
+        try userIdentityService.resetIdentityForDebugOnly()
+        loadLocalIdentity()
+        errorMessage = nil
+      } catch {
+        errorMessage = "We could not reset the local Drift identity."
+      }
+    }
+
     func setDebugEntitlementMode(_ mode: DebugEntitlementMode) async {
       await debugEntitlementOverrideStore.saveMode(mode)
       await load()
@@ -191,6 +260,19 @@ final class SettingsViewModel {
       await load()
     }
   #endif
+
+  private static let identityDateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .short
+    return formatter
+  }()
+}
+
+enum LocalIdentityStatus: Equatable, Sendable {
+  case unknown
+  case ready(createdAt: Date)
+  case unavailable
 }
 
 struct SettingsNavigationRowDescriptor: Identifiable, Equatable, Sendable {

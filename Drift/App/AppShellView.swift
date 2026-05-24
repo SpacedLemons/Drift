@@ -172,7 +172,8 @@ struct AppShellView: View {
             journalRepository: environment.dependencies.journalRepository,
             subscriptionService: environment.dependencies.subscriptionService,
             exportService: environment.dependencies.exportService,
-            imageAttachmentService: environment.dependencies.imageAttachmentService
+            imageAttachmentService: environment.dependencies.imageAttachmentService,
+            userIdentityService: environment.dependencies.userIdentityService
           ),
           coordinator: settingsCoordinator,
           onShowPaywall: {
@@ -190,6 +191,7 @@ struct AppShellView: View {
     .preferredColorScheme(.dark)
     .tint(AppColors.accent)
     .task {
+      ensureAnonymousIdentity()
       handlePendingLaunchAction()
     }
     .onChange(of: launchActionStore.pendingAction) {
@@ -255,6 +257,16 @@ struct AppShellView: View {
   @ViewBuilder
   private func settingsDestination(_ route: SettingsRoute) -> some View {
     switch route {
+    case .chatGPTConnection:
+      ChatGPTConnectionView(
+        viewModel: ChatGPTConnectionViewModel(
+          userIdentityService: environment.dependencies.userIdentityService,
+          chatGPTConnectionService: environment.dependencies.chatGPTConnectionService,
+          spaceRepository: environment.dependencies.spaceRepository,
+          contextPackService: environment.dependencies.contextPackService,
+          driftRepository: environment.dependencies.driftRepository
+        )
+      )
     case .reminders:
       ReminderSettingsView(
         viewModel: ReminderSettingsViewModel(
@@ -355,6 +367,10 @@ struct AppShellView: View {
     journalReloadToken = UUID()
     spacesReloadToken = UUID()
     timelineReloadToken = UUID()
+  }
+
+  private func ensureAnonymousIdentity() {
+    _ = try? environment.dependencies.userIdentityService.currentIdentity()
   }
 
   private func startCaptureInSpace(_ space: DriftSpace) {

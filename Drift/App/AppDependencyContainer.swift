@@ -28,6 +28,8 @@ struct AppDependencyContainer: Sendable {
   let guideService: any GuideService & Sendable
   let exportService: any ExportService & Sendable
   let backupService: any BackupService & Sendable
+  let userIdentityService: any UserIdentityService & Sendable
+  let chatGPTConnectionService: any ChatGPTConnectionService & Sendable
 
   static func unavailable() -> AppDependencyContainer {
     let journalRepository = UnavailableJournalRepository()
@@ -53,7 +55,9 @@ struct AppDependencyContainer: Sendable {
       imageAttachmentService: LocalImageAttachmentService(),
       guideService: LocalGuideService(),
       exportService: LocalMarkdownExportService(),
-      backupService: PlaceholderBackupService()
+      backupService: PlaceholderBackupService(),
+      userIdentityService: PreviewUserIdentityService(),
+      chatGPTConnectionService: LocalChatGPTConnectionService()
     )
   }
 
@@ -108,7 +112,9 @@ struct AppDependencyContainer: Sendable {
       imageAttachmentService: LocalImageAttachmentService(),
       guideService: LocalGuideService(),
       exportService: LocalMarkdownExportService(),
-      backupService: PlaceholderBackupService()
+      backupService: PlaceholderBackupService(),
+      userIdentityService: KeychainUserIdentityService(),
+      chatGPTConnectionService: LocalChatGPTConnectionService()
     )
   }
 }

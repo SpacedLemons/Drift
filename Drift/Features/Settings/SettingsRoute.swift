@@ -6,6 +6,7 @@
 //
 
 enum SettingsRoute: Hashable, Sendable {
+  case chatGPTConnection
   case reminders
   case voiceTranscription
   case appearance

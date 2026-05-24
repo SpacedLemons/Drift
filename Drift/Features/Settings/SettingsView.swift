@@ -15,6 +15,9 @@ struct SettingsView: View {
   let onEntriesDeleted: () -> Void
 
   @State private var isShowingDeleteAllConfirmation = false
+  #if DEBUG
+    @State private var isShowingResetIdentityConfirmation = false
+  #endif
 
   init(
     viewModel: SettingsViewModel,
@@ -67,6 +70,25 @@ struct SettingsView: View {
     } message: {
       Text("This will remove your Drifts from this device.")
     }
+    #if DEBUG
+      .alert(
+        "Reset local identity?",
+        isPresented: $isShowingResetIdentityConfirmation
+      ) {
+        Button(role: .destructive) {
+          viewModel.resetLocalIdentityForDebugOnly()
+        } label: {
+          Text("Reset Identity")
+        }
+
+        Button(role: .cancel) {
+        } label: {
+          Text("Cancel")
+        }
+      } message: {
+        Text("This replaces the hidden local install ID. It is for debug use only.")
+      }
+    #endif
     .sheet(item: $bindableViewModel.exportShareItem) { exportItem in
       ActivityView(activityItems: [exportItem.url])
     }
@@ -93,6 +115,22 @@ struct SettingsView: View {
           subtitle: "Existing Drifts always stay yours.",
           trailingValue: viewModel.entitlement.tier.displayName,
           action: onShowPaywall
+        )
+      }
+
+      SettingsSectionCard(title: "Account / Connection") {
+        SettingsRow(
+          icon: AppIcons.lockShield,
+          title: viewModel.localIdentityTitle,
+          subtitle: viewModel.localIdentitySubtitle,
+          trailingValue: viewModel.localIdentityTrailingValue
+        )
+
+        Divider().overlay(AppColors.border)
+
+        settingsNavigationRow(
+          for: .chatGPTConnection,
+          action: coordinator.showChatGPTConnection
         )
       }
 
@@ -234,6 +272,26 @@ struct SettingsView: View {
             subtitle: "Uses the same delete confirmation as the Data section.",
             action: showDeleteAllConfirmation
           )
+
+          Divider().overlay(AppColors.border)
+
+          SettingsRow(
+            icon: AppIcons.lockShield,
+            title: "Local identity diagnostics",
+            subtitle: viewModel.debugLocalIdentityCreatedAtText,
+            trailingValue: "Hidden"
+          )
+
+          Divider().overlay(AppColors.border)
+
+          SettingsDestructiveRow(
+            icon: AppIcons.trash,
+            title: "Reset local identity",
+            subtitle: "Debug only. Future connected features must not trust this as auth.",
+            action: {
+              isShowingResetIdentityConfirmation = true
+            }
+          )
         }
       }
     }
@@ -277,7 +335,8 @@ private struct ActivityView: UIViewControllerRepresentable {
       viewModel: SettingsViewModel(
         journalRepository: PreviewJournalRepository(),
         subscriptionService: DisabledSubscriptionService(),
-        exportService: LocalMarkdownExportService()
+        exportService: LocalMarkdownExportService(),
+        userIdentityService: PreviewUserIdentityService()
       ),
       coordinator: SettingsCoordinator(),
       onShowPaywall: {},

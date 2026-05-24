@@ -12,6 +12,10 @@ import Observation
 final class SettingsCoordinator {
   var path: [SettingsRoute] = []
 
+  func showChatGPTConnection() {
+    path.append(.chatGPTConnection)
+  }
+
   func showReminders() {
     path.append(.reminders)
   }
