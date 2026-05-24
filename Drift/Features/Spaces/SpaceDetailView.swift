@@ -99,7 +99,7 @@ struct SpaceDetailView: View {
 
       Button("Cancel", role: .cancel) {}
     } message: {
-      Text("Drifts in this Space will stay in your Timeline.")
+      Text("Drifts in this Space will stay in your saved Drifts.")
     }
     .task {
       await viewModel.load()

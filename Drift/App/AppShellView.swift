@@ -15,15 +15,12 @@ struct AppShellView: View {
   @State private var journalHomeViewModel: JournalHomeViewModel
   @State private var spacesViewModel: SpacesViewModel
   @State private var contextPacksViewModel: ContextPacksViewModel
-  @State private var timelineViewModel: TimelineViewModel
   @State private var gptConnectionViewModel: GPTConnectionViewModel
   @State private var captureCoordinator: CaptureCoordinator
   @State private var settingsCoordinator: SettingsCoordinator
   @State private var selectedTab: AppTab = .capture
-  @State private var timelinePath: [AppRoute] = []
   @State private var journalReloadToken = UUID()
   @State private var spacesReloadToken = UUID()
-  @State private var timelineReloadToken = UUID()
   @State private var entryLimitAlert: EntryLimitAlert?
 
   init(
@@ -53,11 +50,6 @@ struct AppShellView: View {
         spaceRepository: environment.dependencies.spaceRepository,
         contextPackService: environment.dependencies.contextPackService,
         contextExportService: environment.dependencies.contextExportService
-      )
-    )
-    _timelineViewModel = State(
-      initialValue: TimelineViewModel(
-        journalRepository: environment.dependencies.journalRepository
       )
     )
     _gptConnectionViewModel = State(
@@ -151,21 +143,6 @@ struct AppShellView: View {
       }
       .tabItem { AppTab.spaces.label }
       .tag(AppTab.spaces)
-
-      NavigationStack(path: $timelinePath) {
-        TimelineView(
-          viewModel: timelineViewModel,
-          reloadToken: timelineReloadToken,
-          onEntrySelected: { entry in
-            timelinePath.append(.journalEntry(entry.id))
-          }
-        )
-        .navigationDestination(for: AppRoute.self) { route in
-          timelineDestination(route)
-        }
-      }
-      .tabItem { AppTab.timeline.label }
-      .tag(AppTab.timeline)
 
       NavigationStack {
         GPTConnectionView(viewModel: gptConnectionViewModel)
@@ -363,7 +340,6 @@ struct AppShellView: View {
   private func refreshJournalData() {
     journalReloadToken = UUID()
     spacesReloadToken = UUID()
-    timelineReloadToken = UUID()
   }
 
   private func ensureAnonymousIdentity() {
@@ -375,62 +351,6 @@ struct AppShellView: View {
       captureCoordinator.setPreselectedSpaceIds([space.id])
       selectedTab = .capture
       coordinator.startCapture()
-    }
-  }
-
-  @ViewBuilder
-  private func timelineDestination(_ route: AppRoute) -> some View {
-    switch route {
-    case .journalEntry(let id):
-      EntryDetailView(
-        viewModel: EntryDetailViewModel(
-          entryID: id,
-          journalRepository: environment.dependencies.journalRepository,
-          spaceRepository: environment.dependencies.spaceRepository,
-          contextPackService: environment.dependencies.contextPackService,
-          exportService: environment.dependencies.exportService,
-          imageAttachmentService: environment.dependencies.imageAttachmentService,
-          customThemeService: environment.dependencies.customThemeService
-        ),
-        reloadToken: timelineReloadToken,
-        onEditRequested: {
-          timelinePath.append(.editJournalEntry(id))
-        },
-        onEntryChanged: refreshJournalData,
-        onEntryDeleted: {
-          refreshJournalData()
-          timelinePath.removeAll()
-        }
-      )
-    case .editJournalEntry(let id):
-      EditEntryView(
-        viewModel: EntryDetailViewModel(
-          entryID: id,
-          journalRepository: environment.dependencies.journalRepository,
-          spaceRepository: environment.dependencies.spaceRepository,
-          contextPackService: environment.dependencies.contextPackService,
-          exportService: environment.dependencies.exportService,
-          imageAttachmentService: environment.dependencies.imageAttachmentService,
-          customThemeService: environment.dependencies.customThemeService
-        ),
-        onCancel: {
-          backToTimelineEntryDetail(id)
-        },
-        onSaved: {
-          refreshJournalData()
-          backToTimelineEntryDetail(id)
-        }
-      )
-    case .capture(_):
-      EmptyView()
-    }
-  }
-
-  private func backToTimelineEntryDetail(_ id: UUID) {
-    if let detailIndex = timelinePath.lastIndex(of: .journalEntry(id)) {
-      timelinePath = Array(timelinePath.prefix(through: detailIndex))
-    } else {
-      timelinePath = [.journalEntry(id)]
     }
   }
 

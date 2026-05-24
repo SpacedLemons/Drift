@@ -26,9 +26,9 @@ final class DriftUITests: XCTestCase {
     let app = XCUIApplication()
     app.launch()
 
-    XCTAssertTrue(app.tabBars.buttons["Timeline"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.tabBars.buttons["Capture"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.tabBars.buttons["Spaces"].exists)
-    XCTAssertTrue(app.tabBars.buttons["Insights"].exists)
+    XCTAssertTrue(app.tabBars.buttons["GPT"].exists)
     XCTAssertTrue(app.tabBars.buttons["Settings"].exists)
   }
 

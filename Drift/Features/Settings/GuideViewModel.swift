@@ -34,7 +34,7 @@ final class GuideViewModel {
     GuideAnnotation(
       icon: AppIcons.calendar,
       title: "Calendar",
-      message: "Expand the calendar on the Timeline to browse older local Drifts."
+      message: "Use the calendar in Review Drift to browse mood and reflection history."
     ),
     GuideAnnotation(
       icon: AppIcons.bell,

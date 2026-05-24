@@ -103,7 +103,7 @@ struct SpacesView: View {
         spacePendingDeletion = nil
       }
     } message: {
-      Text("Drifts in this Space will stay in your Timeline.")
+      Text("Drifts in this Space will stay in your saved Drifts.")
     }
   }
 

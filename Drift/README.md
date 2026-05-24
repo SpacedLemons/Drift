@@ -1,6 +1,6 @@
 # Drift
 
-Drift is a private voice-first personal context board for iOS. It lets you capture a Drift by voice, transcribe it with Apple Speech, review the text, choose a Drift type, save it locally, browse and filter past Drifts in Timeline, view local mood history, set local reminders, and export local Markdown.
+Drift is a private voice-first personal context board for iOS. It lets you capture a Drift by voice, transcribe it with Apple Speech, review the text, choose a Drift type, save it locally, browse and filter saved Drifts, review local mood history, set local reminders, and export local Markdown.
 
 ## Product Principles
 
