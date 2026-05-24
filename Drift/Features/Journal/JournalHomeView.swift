@@ -27,6 +27,8 @@ struct JournalHomeView: View {
   }
 
   var body: some View {
+    @Bindable var bindableViewModel = viewModel
+
     ZStack(alignment: .bottomTrailing) {
       AppTheme.backgroundGradient
         .ignoresSafeArea()
@@ -34,6 +36,11 @@ struct JournalHomeView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: AppSpacing.l) {
           header
+
+          SearchBar(
+            text: $bindableViewModel.searchText,
+            placeholder: "Search your Drifts"
+          )
 
           filterPills
 
@@ -47,39 +54,34 @@ struct JournalHomeView: View {
         .padding(.top, AppSpacing.l)
         .padding(.bottom, AppSpacing.xxl * 2)
       }
+      .animation(AppAnimation.gentle, value: viewModel.visibleEntries.map(\.id))
 
       FloatingRecordButton(action: onRecordTapped)
         .padding(.trailing, AppSpacing.l)
         .padding(.bottom, AppSpacing.l)
     }
-    .navigationBarTitleDisplayMode(.inline)
+    .navigationTitle("Drift")
+    .navigationBarTitleDisplayMode(.large)
     .task(id: reloadToken) {
       await viewModel.load()
     }
   }
 
   private var header: some View {
-    VStack(alignment: .leading, spacing: AppSpacing.s) {
-      HStack(alignment: .firstTextBaseline) {
-        Text("Drift")
-          .font(AppTypography.appTitle)
-          .foregroundStyle(AppColors.textPrimary)
-          .accessibilityAddTraits(.isHeader)
-
-        Spacer()
-
-        Image(systemName: AppIcons.shield)
-          .font(.system(size: 18, weight: .semibold))
-          .foregroundStyle(AppColors.accentSecondary)
-          .frame(width: 38, height: 38)
-          .background(AppColors.accentSecondary.opacity(0.12), in: Circle())
-          .accessibilityLabel("Private local Drifts")
-      }
-
-      Text("Let your thoughts Drift")
+    HStack(alignment: .top, spacing: AppSpacing.m) {
+      Text("Let your thoughts Drift.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
         .fixedSize(horizontal: false, vertical: true)
+
+      Spacer(minLength: AppSpacing.s)
+
+      Image(systemName: AppIcons.shield)
+        .font(.system(size: 18, weight: .semibold))
+        .foregroundStyle(AppColors.accentSecondary)
+        .frame(width: 38, height: 38)
+        .background(AppColors.accentSecondary.opacity(0.12), in: Circle())
+        .accessibilityLabel("Private local Drifts")
     }
   }
 
@@ -149,13 +151,13 @@ struct JournalHomeView: View {
       )
     } else if viewModel.visibleEntries.isEmpty {
       EmptyStateView(
-        title: emptyEntriesTitle,
-        message: emptyEntriesMessage,
+        title: viewModel.emptyEntriesTitle,
+        message: viewModel.emptyEntriesMessage,
         icon: AppIcons.mic
       )
     } else {
       VStack(alignment: .leading, spacing: AppSpacing.m) {
-        Text("Recent Drifts")
+        Text(viewModel.visibleEntriesSectionTitle)
           .font(AppTypography.cardTitle)
           .foregroundStyle(AppColors.textPrimary)
 
@@ -165,29 +167,16 @@ struct JournalHomeView: View {
               onEntrySelected(entry)
             },
             label: {
-              JournalCard(entry: entry)
+              JournalCard(
+                entry: entry,
+                spaceNames: viewModel.spaceNames(for: entry)
+              )
             }
           )
           .buttonStyle(.plain)
         }
       }
     }
-  }
-
-  private var emptyEntriesTitle: String {
-    if viewModel.entries.isEmpty {
-      return "No Drifts yet."
-    }
-
-    return "No matching Drifts."
-  }
-
-  private var emptyEntriesMessage: String {
-    if viewModel.entries.isEmpty {
-      return "Tap the microphone when you are ready to capture a thought."
-    }
-
-    return "Try another Drift Type."
   }
 
   private var firstRunIntroCard: some View {

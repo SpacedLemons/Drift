@@ -184,6 +184,8 @@ struct ReviewEntryView: View {
         .padding(AppSpacing.l)
       }
     }
+    .navigationTitle("Review Drift")
+    .navigationBarTitleDisplayMode(.large)
     .navigationBarBackButtonHidden()
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
@@ -227,10 +229,6 @@ struct ReviewEntryView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Review Drift")
-        .font(AppTypography.appTitle)
-        .foregroundStyle(AppColors.textPrimary)
-
       Text("You can edit the transcript, choose a type, and adjust suggestions before saving.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)

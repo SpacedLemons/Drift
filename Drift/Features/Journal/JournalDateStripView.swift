@@ -31,6 +31,8 @@ struct CalendarStripView: View {
   let compactDays: [Date]
   let selectedDate: Date?
   let selectedMonthTitle: String
+  let selectedMonthID: String
+  let monthTransitionDirection: CalendarMonthTransitionDirection
   let weekdaySymbols: [String]
   let calendarDays: [CalendarDayState]
   let isExpanded: Bool
@@ -59,6 +61,8 @@ struct CalendarStripView: View {
       if isExpanded {
         MonthCalendarView(
           selectedMonthTitle: selectedMonthTitle,
+          selectedMonthID: selectedMonthID,
+          monthTransitionDirection: monthTransitionDirection,
           weekdaySymbols: weekdaySymbols,
           calendarDays: calendarDays,
           selectionNamespace: selectionNamespace,
@@ -92,11 +96,13 @@ struct CalendarStripView: View {
           }
         },
         label: {
-          Image(systemName: isExpanded ? AppIcons.chevronUp : AppIcons.chevronDown)
+          Image(systemName: AppIcons.chevronDown)
             .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(AppColors.textPrimary)
             .frame(width: 34, height: 34)
             .background(AppColors.surface, in: Circle())
+            .rotationEffect(.degrees(isExpanded ? 180 : 0))
+            .animation(AppAnimation.gentle, value: isExpanded)
         }
       )
       .buttonStyle(.plain)
@@ -177,6 +183,8 @@ struct CalendarStripView: View {
 
 private struct MonthCalendarView: View {
   let selectedMonthTitle: String
+  let selectedMonthID: String
+  let monthTransitionDirection: CalendarMonthTransitionDirection
   let weekdaySymbols: [String]
   let calendarDays: [CalendarDayState]
   let selectionNamespace: Namespace.ID
@@ -194,6 +202,8 @@ private struct MonthCalendarView: View {
     VStack(alignment: .leading, spacing: AppSpacing.m) {
       CalendarMonthHeader(
         selectedMonthTitle: selectedMonthTitle,
+        selectedMonthID: selectedMonthID,
+        monthTransitionDirection: monthTransitionDirection,
         moveMonth: moveMonth
       )
 
@@ -215,6 +225,8 @@ private struct MonthCalendarView: View {
           )
         }
       }
+      .id(selectedMonthID)
+      .transition(.calendarMonth(direction: monthTransitionDirection))
     }
     .padding(AppSpacing.m)
     .background(
@@ -225,13 +237,19 @@ private struct MonthCalendarView: View {
       RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
         .stroke(AppColors.border, lineWidth: 1)
     }
+    .clipped()
+    .animation(AppAnimation.gentle, value: selectedMonthID)
     .gesture(
       DragGesture(minimumDistance: 32)
         .onEnded { value in
           if value.translation.width < -40 {
-            moveMonth(1)
+            withAnimation(AppAnimation.gentle) {
+              moveMonth(1)
+            }
           } else if value.translation.width > 40 {
-            moveMonth(-1)
+            withAnimation(AppAnimation.gentle) {
+              moveMonth(-1)
+            }
           }
         }
     )
@@ -240,13 +258,17 @@ private struct MonthCalendarView: View {
 
 private struct CalendarMonthHeader: View {
   let selectedMonthTitle: String
+  let selectedMonthID: String
+  let monthTransitionDirection: CalendarMonthTransitionDirection
   let moveMonth: (Int) -> Void
 
   var body: some View {
     HStack {
       Button(
         action: {
-          moveMonth(-1)
+          withAnimation(AppAnimation.gentle) {
+            moveMonth(-1)
+          }
         },
         label: {
           Image(systemName: AppIcons.chevronLeft)
@@ -263,12 +285,16 @@ private struct CalendarMonthHeader: View {
         .font(AppTypography.cardTitle)
         .foregroundStyle(AppColors.textPrimary)
         .accessibilityAddTraits(.isHeader)
+        .id(selectedMonthID)
+        .transition(.calendarMonth(direction: monthTransitionDirection))
 
       Spacer()
 
       Button(
         action: {
-          moveMonth(1)
+          withAnimation(AppAnimation.gentle) {
+            moveMonth(1)
+          }
         },
         label: {
           Image(systemName: AppIcons.chevronRight)
@@ -374,3 +400,32 @@ private struct CalendarDayCell: View {
 }
 
 typealias JournalDateStripView = CalendarStripView
+
+extension AnyTransition {
+  fileprivate static func calendarMonth(direction: CalendarMonthTransitionDirection)
+    -> AnyTransition
+  {
+    .asymmetric(
+      insertion: .move(edge: direction.insertionEdge).combined(with: .opacity),
+      removal: .move(edge: direction.removalEdge).combined(with: .opacity)
+    )
+  }
+}
+
+extension CalendarMonthTransitionDirection {
+  fileprivate var insertionEdge: Edge {
+    switch self {
+    case .next: .leading
+    case .previous: .trailing
+    case .none: .leading
+    }
+  }
+
+  fileprivate var removalEdge: Edge {
+    switch self {
+    case .next: .trailing
+    case .previous: .leading
+    case .none: .trailing
+    }
+  }
+}

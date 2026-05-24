@@ -138,6 +138,17 @@ final class ContextPacksViewModel {
     }
   }
 
+  func editPack(_ pack: ContextPack) {
+    draftID = pack.id
+    draftCreatedAt = pack.createdAt
+    draftName = pack.name
+    draftDescription = pack.description
+    selectedSpaceIds = Set(pack.spaceIds)
+    selectedDriftIds = Set(pack.driftIds)
+    copiedMessage = "Editing Context Pack."
+    errorMessage = nil
+  }
+
   func startNewDraft() {
     draftID = UUID()
     draftCreatedAt = now()

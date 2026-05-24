@@ -54,6 +54,7 @@ struct InsightsView: View {
       }
     }
     .navigationTitle("Mood History")
+    .navigationBarTitleDisplayMode(.large)
     .task(id: reloadToken) {
       await viewModel.load()
     }
@@ -61,10 +62,6 @@ struct InsightsView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Mood History")
-        .font(AppTypography.appTitle)
-        .foregroundStyle(AppColors.textPrimary)
-
       Text("Local patterns from your Drifts.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)

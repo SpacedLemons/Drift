@@ -13,6 +13,7 @@ struct SpaceDetailView: View {
   let viewModel: SpacesViewModel
   let space: DriftSpace
   let contextPacksViewModel: ContextPacksViewModel
+  let onCaptureInSpace: (DriftSpace) -> Void
 
   @State private var isShowingAddDriftSheet = false
   @State private var isShowingDeleteConfirmation = false
@@ -42,7 +43,7 @@ struct SpaceDetailView: View {
       }
     }
     .navigationTitle(currentSpace.name)
-    .navigationBarTitleDisplayMode(.inline)
+    .navigationBarTitleDisplayMode(.large)
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         Menu {
@@ -115,11 +116,6 @@ struct SpaceDetailView: View {
           .background(currentSpace.accentColor.opacity(0.14), in: Circle())
 
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
-          Text(currentSpace.name)
-            .font(AppTypography.appTitle)
-            .foregroundStyle(AppColors.textPrimary)
-            .fixedSize(horizontal: false, vertical: true)
-
           Text(currentSpace.description)
             .font(AppTypography.body)
             .foregroundStyle(AppColors.textSecondary)
@@ -160,6 +156,16 @@ struct SpaceDetailView: View {
 
       Button {
         viewModel.clearMessages()
+        onCaptureInSpace(currentSpace)
+      } label: {
+        Label("Capture Drift", systemImage: AppIcons.mic)
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.bordered)
+      .tint(AppColors.accentSecondary)
+
+      Button {
+        viewModel.clearMessages()
         Task {
           _ = await viewModel.createContextPack(from: currentSpace)
           await contextPacksViewModel.load()
@@ -192,8 +198,8 @@ struct SpaceDetailView: View {
   private var driftsSection: some View {
     if drifts.isEmpty {
       EmptyStateView(
-        title: "No Drifts in this Space",
-        message: "Add existing Drifts or save new Drifts into this Space from Review Drift.",
+        title: "No Drifts in this Space yet.",
+        message: "Add thoughts, goals, ideas, or memories when they belong here.",
         icon: currentSpace.icon
       )
     } else {
@@ -346,7 +352,8 @@ private struct AddDriftToSpaceView: View {
         spaceRepository: LocalSpaceRepository(),
         contextPackService: LocalContextPackService(),
         contextExportService: LocalContextExportService()
-      )
+      ),
+      onCaptureInSpace: { _ in }
     )
   }
 }

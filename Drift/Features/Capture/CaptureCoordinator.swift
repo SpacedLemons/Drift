@@ -5,6 +5,7 @@
 //  Created by Lucas Stuart West Rogers on 12/05/2026.
 //
 
+import Foundation
 import Observation
 
 @MainActor
@@ -13,8 +14,18 @@ final class CaptureCoordinator {
   @ObservationIgnored
   private let dependencies: AppDependencyContainer
 
+  private var preselectedSpaceIds: [UUID] = []
+
   init(dependencies: AppDependencyContainer) {
     self.dependencies = dependencies
+  }
+
+  func setPreselectedSpaceIds(_ spaceIds: [UUID]) {
+    preselectedSpaceIds = spaceIds
+  }
+
+  func clearPreselectedSpaceIds() {
+    preselectedSpaceIds = []
   }
 
   func makeRecordingViewModel() -> RecordingViewModel {
@@ -39,7 +50,8 @@ final class CaptureCoordinator {
       audioPlaybackService: dependencies.audioPlaybackService,
       imageAttachmentService: dependencies.imageAttachmentService,
       customThemeService: dependencies.customThemeService,
-      dailyEntryLimitService: dependencies.dailyEntryLimitService
+      dailyEntryLimitService: dependencies.dailyEntryLimitService,
+      preselectedSpaceIds: preselectedSpaceIds
     )
   }
 

@@ -36,7 +36,7 @@ struct ContextPacksView: View {
       }
     }
     .navigationTitle("Context Packs")
-    .navigationBarTitleDisplayMode(.inline)
+    .navigationBarTitleDisplayMode(.large)
     .task {
       await reload()
     }
@@ -67,11 +67,6 @@ struct ContextPacksView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Context Packs")
-        .font(AppTypography.appTitle)
-        .foregroundStyle(AppColors.textPrimary)
-        .accessibilityAddTraits(.isHeader)
-
       Text("Context Packs let you collect Drifts and share them with AI when you choose.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
@@ -278,6 +273,10 @@ struct ContextPacksView: View {
         Spacer()
 
         Menu {
+          Button("Edit") {
+            viewModel.editPack(pack)
+            refreshPreview()
+          }
           Button("Copy for ChatGPT") {
             copy(pack: pack)
           }

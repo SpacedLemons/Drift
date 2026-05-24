@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct EntryDetailView: View {
   @Environment(\.dismiss) private var dismiss
@@ -32,12 +33,16 @@ struct EntryDetailView: View {
   }
 
   var body: some View {
+    @Bindable var bindableViewModel = viewModel
+
     ZStack {
       AppTheme.backgroundGradient
         .ignoresSafeArea()
 
       content
     }
+    .navigationTitle(viewModel.entry?.displayTitle ?? "Drift")
+    .navigationBarTitleDisplayMode(.large)
     .navigationBarBackButtonHidden()
     .toolbar {
       ToolbarItem(placement: .topBarLeading) {
@@ -104,6 +109,9 @@ struct EntryDetailView: View {
     .task(id: reloadToken) {
       await viewModel.load()
     }
+    .sheet(item: $bindableViewModel.exportShareItem) { exportItem in
+      ActivityView(activityItems: [exportItem.url])
+    }
   }
 
   @ViewBuilder
@@ -140,14 +148,17 @@ struct EntryDetailView: View {
   private func displayContent(_ entry: JournalEntry) -> some View {
     VStack(alignment: .leading, spacing: AppSpacing.l) {
       VStack(alignment: .leading, spacing: AppSpacing.s) {
-        Text(entry.displayTitle)
-          .font(AppTypography.appTitle)
-          .foregroundStyle(AppColors.textPrimary)
-          .accessibilityAddTraits(.isHeader)
+        Text(
+          "Created \(entry.createdAt.formatted(.dateTime.weekday(.wide).month().day().hour().minute()))"
+        )
+        .font(AppTypography.caption)
+        .foregroundStyle(AppColors.textTertiary)
 
-        Text(entry.createdAt, format: .dateTime.weekday(.wide).month().day().hour().minute())
-          .font(AppTypography.caption)
-          .foregroundStyle(AppColors.textTertiary)
+        if entry.updatedAt != entry.createdAt {
+          Text("Updated \(entry.updatedAt.formatted(.dateTime.month().day().hour().minute()))")
+            .font(AppTypography.caption)
+            .foregroundStyle(AppColors.textTertiary)
+        }
       }
 
       detailMeta(entry)
@@ -176,13 +187,43 @@ struct EntryDetailView: View {
         }
       }
 
-      detailCard(title: "Notes", icon: AppIcons.sparkles) {
-        Text(
-          "Context notes will be added later. Drift is using local details only for now."
-        )
-        .font(AppTypography.body)
-        .foregroundStyle(AppColors.textSecondary)
-        .fixedSize(horizontal: false, vertical: true)
+      if !viewModel.spaceLabels(for: entry).isEmpty {
+        detailCard(title: "Spaces", icon: AppIcons.spaces) {
+          FlowLayout(spacing: AppSpacing.xs) {
+            ForEach(viewModel.spaceLabels(for: entry), id: \.self) { spaceName in
+              Label(spaceName, systemImage: AppIcons.spaces)
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.horizontal, AppSpacing.s)
+                .padding(.vertical, AppSpacing.xs)
+                .background(AppColors.surfaceRaised, in: Capsule())
+            }
+          }
+        }
+      }
+
+      if !viewModel.relatedContextPacks.isEmpty {
+        detailCard(title: "Context Packs", icon: AppIcons.contextPack) {
+          VStack(alignment: .leading, spacing: AppSpacing.s) {
+            ForEach(viewModel.relatedContextPacks) { pack in
+              VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(pack.name)
+                  .font(AppTypography.bodyEmphasis)
+                  .foregroundStyle(AppColors.textPrimary)
+
+                Text(pack.description)
+                  .font(AppTypography.caption)
+                  .foregroundStyle(AppColors.textSecondary)
+                  .lineLimit(2)
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(AppSpacing.s)
+              .background(
+                AppColors.surfaceRaised,
+                in: RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius))
+            }
+          }
+        }
       }
 
       actionRows
@@ -210,6 +251,16 @@ struct EntryDetailView: View {
           .padding(.horizontal, AppSpacing.s)
           .padding(.vertical, AppSpacing.xs)
           .background(AppColors.surfaceRaised, in: Capsule())
+      }
+
+      ForEach(viewModel.spaceNames(for: entry), id: \.self) { spaceName in
+        Label(spaceName, systemImage: AppIcons.spaces)
+          .font(AppTypography.caption)
+          .foregroundStyle(AppColors.textSecondary)
+          .padding(.horizontal, AppSpacing.s)
+          .padding(.vertical, AppSpacing.xs)
+          .background(AppColors.surfaceRaised, in: Capsule())
+          .accessibilityLabel("Space \(spaceName)")
       }
 
       ForEach(entry.themes) { theme in
@@ -264,6 +315,30 @@ struct EntryDetailView: View {
         }
       )
       .accessibilityLabel("Edit Drift")
+
+      Button(
+        action: {
+          Task {
+            await viewModel.exportCurrentEntry()
+          }
+        },
+        label: {
+          if viewModel.isExporting {
+            ProgressView()
+              .tint(AppColors.accent)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(AppSpacing.m)
+              .background(
+                AppColors.surface.opacity(0.84),
+                in: RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
+              )
+          } else {
+            detailActionLabel("Share Drift", icon: AppIcons.share)
+          }
+        }
+      )
+      .disabled(viewModel.entry == nil || viewModel.isExporting)
+      .accessibilityLabel("Share Drift")
 
       Button(
         role: .destructive,
@@ -340,4 +415,29 @@ struct EntryDetailView: View {
       onEntryDeleted: {}
     )
   }
+}
+
+private struct ActivityView: UIViewControllerRepresentable {
+  let activityItems: [Any]
+
+  func makeUIViewController(context: Context) -> UIActivityViewController {
+    let controller = UIActivityViewController(
+      activityItems: activityItems,
+      applicationActivities: nil
+    )
+    controller.popoverPresentationController?.sourceView = controller.view
+    controller.popoverPresentationController?.sourceRect = CGRect(
+      x: controller.view.bounds.midX,
+      y: controller.view.bounds.midY,
+      width: 0,
+      height: 0
+    )
+    controller.popoverPresentationController?.permittedArrowDirections = []
+    return controller
+  }
+
+  func updateUIViewController(
+    _ uiViewController: UIActivityViewController,
+    context: Context
+  ) {}
 }

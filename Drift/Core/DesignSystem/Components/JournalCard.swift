@@ -9,6 +9,7 @@ import SwiftUI
 
 struct JournalCard: View {
   let entry: JournalEntry
+  var spaceNames: [String] = []
 
   var body: some View {
     VStack(alignment: .leading, spacing: AppSpacing.m) {
@@ -90,7 +91,17 @@ struct JournalCard: View {
             .lineLimit(1)
         }
 
-        if !entry.spaceIds.isEmpty {
+        if !spaceNames.isEmpty {
+          ForEach(spaceNames.prefix(2), id: \.self) { spaceName in
+            Label(spaceName, systemImage: AppIcons.spaces)
+              .font(AppTypography.caption)
+              .foregroundStyle(AppColors.textSecondary)
+              .padding(.horizontal, AppSpacing.s)
+              .padding(.vertical, AppSpacing.xs)
+              .background(AppColors.surfaceRaised, in: Capsule())
+              .lineLimit(1)
+          }
+        } else if !entry.spaceIds.isEmpty {
           Label("\(entry.spaceIds.count) Spaces", systemImage: AppIcons.spaces)
             .font(AppTypography.caption)
             .foregroundStyle(AppColors.textSecondary)

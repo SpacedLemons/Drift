@@ -119,6 +119,23 @@ struct ReviewEntryViewModelTests {
   }
 
   @Test
+  func savesPreselectedSpaceFromSpaceCapture() async throws {
+    let repository = PreviewJournalRepository(entries: [])
+    let spaceID = fixtureUUID("B1000000-0000-0000-0000-000000000010")
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: repository,
+      preselectedSpaceIds: [spaceID]
+    )
+
+    let entry = await viewModel.save()
+    let savedEntry = try await repository.fetchEntry(id: makeDraft().id)
+
+    #expect(entry?.spaceIds == [spaceID])
+    #expect(savedEntry?.spaceIds == [spaceID])
+  }
+
+  @Test
   func addImageInputsSavesAttachmentMetadataOnEntry() async throws {
     let repository = PreviewJournalRepository(entries: [])
     let viewModel = ReviewEntryViewModel(

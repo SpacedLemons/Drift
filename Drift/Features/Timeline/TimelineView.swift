@@ -42,6 +42,8 @@ struct TimelineView: View {
             compactDays: viewModel.dateStripDays,
             selectedDate: viewModel.selectedDate,
             selectedMonthTitle: viewModel.selectedMonthTitle,
+            selectedMonthID: viewModel.selectedMonthID,
+            monthTransitionDirection: viewModel.monthTransitionDirection,
             weekdaySymbols: viewModel.weekdaySymbols,
             calendarDays: viewModel.calendarDays,
             isExpanded: viewModel.isCalendarExpanded,
@@ -59,7 +61,7 @@ struct TimelineView: View {
       }
     }
     .navigationTitle("Timeline")
-    .navigationBarTitleDisplayMode(.inline)
+    .navigationBarTitleDisplayMode(.large)
     .task(id: reloadToken) {
       await viewModel.load()
     }
@@ -67,11 +69,6 @@ struct TimelineView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Timeline")
-        .font(AppTypography.appTitle)
-        .foregroundStyle(AppColors.textPrimary)
-        .accessibilityAddTraits(.isHeader)
-
       Text("Browse historical Drifts by date and type.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)

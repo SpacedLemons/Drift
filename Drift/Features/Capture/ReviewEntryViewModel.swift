@@ -64,6 +64,7 @@ final class ReviewEntryViewModel {
     imageAttachmentService: any ImageAttachmentService = PreviewImageAttachmentService(),
     customThemeService: any CustomThemeService = PreviewCustomThemeService(),
     dailyEntryLimitService: any DailyEntryLimitService = PreviewDailyEntryLimitService(),
+    preselectedSpaceIds: [UUID] = [],
     fileManager: FileManager = .default
   ) {
     self.draft = draft
@@ -81,6 +82,7 @@ final class ReviewEntryViewModel {
     selectedThemes = draft.suggestedThemes
     selectedCustomThemes = []
     tags = draft.tags
+    selectedSpaceIds = preselectedSpaceIds
     shouldShowPlaybackSection = draft.duration > 0
   }
 

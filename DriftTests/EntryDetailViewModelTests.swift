@@ -29,6 +29,56 @@ struct EntryDetailViewModelTests {
   }
 
   @Test
+  func loadPopulatesSpacesAndRelatedContextPacks() async throws {
+    let space = DriftSpace(
+      id: fixtureUUID("F1000000-0000-0000-0000-000000000001"),
+      name: "OpenAI Career",
+      description: "Career context",
+      icon: "sparkles"
+    )
+    let entry = JournalEntry(
+      id: fixtureUUID("F1000000-0000-0000-0000-000000000002"),
+      createdAt: PreviewData.baseDate,
+      transcript: "Interview prep.",
+      title: "OpenAI prep",
+      driftType: .goal,
+      spaceIds: [space.id]
+    )
+    let directPack = ContextPack(
+      id: fixtureUUID("F1000000-0000-0000-0000-000000000003"),
+      name: "Direct Context",
+      description: "Directly selected Drift",
+      driftIds: [entry.id]
+    )
+    let spacePack = ContextPack(
+      id: fixtureUUID("F1000000-0000-0000-0000-000000000004"),
+      name: "Space Context",
+      description: "Selected Space",
+      spaceIds: [space.id]
+    )
+    let unrelatedPack = ContextPack(
+      id: fixtureUUID("F1000000-0000-0000-0000-000000000005"),
+      name: "Unrelated Context",
+      description: "Not related"
+    )
+    let viewModel = EntryDetailViewModel(
+      entryID: entry.id,
+      journalRepository: PreviewJournalRepository(entries: [entry]),
+      spaceRepository: LocalSpaceRepository(spaces: [space]),
+      contextPackService: LocalContextPackService(
+        contextPacks: [directPack, spacePack, unrelatedPack]
+      )
+    )
+
+    await viewModel.load()
+
+    #expect(viewModel.spaceNames(for: entry) == ["OpenAI Career"])
+    #expect(viewModel.spaceLabels(for: entry) == ["OpenAI Career"])
+    #expect(
+      Set(viewModel.relatedContextPacks.map(\.name)) == Set(["Direct Context", "Space Context"]))
+  }
+
+  @Test
   func loadHandlesMissingEntry() async throws {
     let missingID = UUID()
     let repository = MockJournalRepository()
@@ -205,6 +255,36 @@ struct EntryDetailViewModelTests {
     #expect(didToggle)
     #expect(viewModel.entry?.isFavorite == !entry.isFavorite)
     #expect(updatedEntry?.isFavorite == !entry.isFavorite)
+  }
+
+  @Test
+  func exportCurrentEntryCreatesLocalShareItem() async throws {
+    let entry = PreviewData.journalEntries[0]
+    let outputDirectory = FileManager.default.temporaryDirectory
+      .appendingPathComponent("drift-entry-export-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: outputDirectory) }
+    let viewModel = EntryDetailViewModel(
+      entryID: entry.id,
+      journalRepository: PreviewJournalRepository(entries: [entry]),
+      exportService: LocalMarkdownExportService(
+        outputDirectory: outputDirectory,
+        calendar: Calendar(identifier: .gregorian),
+        locale: Locale(identifier: "en_US_POSIX"),
+        timeZone: TimeZone(secondsFromGMT: 0) ?? .gmt
+      ),
+      now: { Date(timeIntervalSince1970: 1_778_600_000) }
+    )
+
+    await viewModel.load()
+    let exportURL = await viewModel.exportCurrentEntry()
+
+    let url = try #require(exportURL)
+    let markdown = try String(contentsOf: url, encoding: .utf8)
+
+    #expect(viewModel.exportShareItem?.url == url)
+    #expect(markdown.contains(entry.displayTitle))
+    #expect(
+      markdown.contains("Exports are created locally. You choose where to save or share them."))
   }
 
   @Test

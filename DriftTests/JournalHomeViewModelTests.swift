@@ -67,10 +67,11 @@ struct JournalHomeViewModelTests {
     #expect(
       viewModel.driftTypeFilters == [
         .thought,
+        .reflection,
         .goal,
         .idea,
-        .reflection,
         .memory,
+        .task,
       ])
   }
 
@@ -122,6 +123,170 @@ struct JournalHomeViewModelTests {
     viewModel.selectDriftTypeFilter(nil)
 
     #expect(viewModel.visibleEntries.count == 2)
+  }
+
+  @Test
+  func searchTrimsWhitespaceAndIsCaseInsensitive() async throws {
+    let openAIEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000011"),
+      createdAt: PreviewData.baseDate,
+      transcript: "Interview thoughts.",
+      title: "OpenAI prep",
+      driftType: .thought
+    )
+    let otherEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000012"),
+      createdAt: PreviewData.baseDate.addingTimeInterval(-60),
+      transcript: "Weekend notes.",
+      title: "Weekend",
+      driftType: .reflection
+    )
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [otherEntry, openAIEntry])
+    )
+
+    await viewModel.load()
+    viewModel.searchText = "  openai  "
+
+    #expect(viewModel.visibleEntries.map(\.id) == [openAIEntry.id])
+  }
+
+  @Test
+  func titleSearchMatchesRankAboveBodyOnlyMatches() async throws {
+    let bodyOnlyMatch = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000013"),
+      createdAt: PreviewData.baseDate,
+      transcript: "Mentioned OpenAI once in the body.",
+      title: "Career notes",
+      driftType: .thought
+    )
+    let titleMatch = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000014"),
+      createdAt: PreviewData.baseDate.addingTimeInterval(-60 * 60),
+      transcript: "Prep plan.",
+      title: "OpenAI prep",
+      driftType: .goal
+    )
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [bodyOnlyMatch, titleMatch])
+    )
+
+    await viewModel.load()
+    viewModel.searchText = "OpenAI"
+
+    #expect(viewModel.visibleEntries.map(\.id) == [titleMatch.id, bodyOnlyMatch.id])
+  }
+
+  @Test
+  func searchMatchesTagsAndSpaceNames() async throws {
+    let spaceID = fixtureUUID("A1000000-0000-0000-0000-000000000015")
+    let taggedEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000016"),
+      createdAt: PreviewData.baseDate,
+      transcript: "A launch plan.",
+      title: "Launch",
+      tags: ["roadmap"],
+      driftType: .task
+    )
+    let spaceEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000017"),
+      createdAt: PreviewData.baseDate.addingTimeInterval(-60),
+      transcript: "Interview notes.",
+      title: "Prep",
+      driftType: .thought,
+      spaceIds: [spaceID]
+    )
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [taggedEntry, spaceEntry]),
+      spaceRepository: LocalSpaceRepository(
+        spaces: [
+          DriftSpace(
+            id: spaceID,
+            name: "OpenAI Career",
+            description: "Application notes.",
+            createdAt: PreviewData.baseDate
+          )
+        ]
+      )
+    )
+
+    await viewModel.load()
+    viewModel.searchText = "roadmap"
+
+    #expect(viewModel.visibleEntries.map(\.id) == [taggedEntry.id])
+
+    viewModel.searchText = "career"
+
+    #expect(viewModel.visibleEntries.map(\.id) == [spaceEntry.id])
+    #expect(viewModel.spaceNames(for: spaceEntry) == ["OpenAI Career"])
+  }
+
+  @Test
+  func searchAndDriftTypeFilterCombine() async throws {
+    let goalEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000018"),
+      createdAt: PreviewData.baseDate,
+      transcript: "OpenAI goal.",
+      title: "OpenAI plan",
+      driftType: .goal
+    )
+    let ideaEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000019"),
+      createdAt: PreviewData.baseDate.addingTimeInterval(-60),
+      transcript: "OpenAI idea.",
+      title: "OpenAI idea",
+      driftType: .idea
+    )
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [goalEntry, ideaEntry])
+    )
+
+    await viewModel.load()
+    viewModel.searchText = "openai"
+    viewModel.selectDriftTypeFilter(.goal)
+
+    #expect(viewModel.visibleEntries == [goalEntry])
+  }
+
+  @Test
+  func emptySearchReturnsNormalRecentDrifts() async throws {
+    let olderEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000020"),
+      createdAt: PreviewData.baseDate.addingTimeInterval(-60 * 60),
+      transcript: "Older.",
+      title: "Older",
+      driftType: .reflection
+    )
+    let recentEntry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000021"),
+      createdAt: PreviewData.baseDate,
+      transcript: "Recent.",
+      title: "Recent",
+      driftType: .thought
+    )
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [olderEntry, recentEntry])
+    )
+
+    await viewModel.load()
+    viewModel.searchText = "  "
+
+    #expect(viewModel.visibleEntries.map(\.id) == [recentEntry.id, olderEntry.id])
+    #expect(viewModel.visibleEntriesSectionTitle == "Recent Drifts")
+  }
+
+  @Test
+  func searchNoResultsUsesSearchEmptyState() async throws {
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [PreviewData.journalEntries[0]])
+    )
+
+    await viewModel.load()
+    viewModel.searchText = "not-here"
+
+    #expect(viewModel.visibleEntries.isEmpty)
+    #expect(viewModel.emptyEntriesTitle == "No matching Drifts.")
+    #expect(viewModel.emptyEntriesMessage == "Try another word or phrase.")
   }
 
   @Test

@@ -87,6 +87,7 @@ struct TimelineViewModelTests {
 
     #expect(viewModel.isCalendarExpanded)
     #expect(viewModel.selectedDate == nil)
+    #expect(viewModel.monthTransitionDirection == .none)
     #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2026)
     #expect(calendar.component(.month, from: viewModel.selectedMonth) == 5)
     #expect(calendar.component(.day, from: viewModel.selectedMonth) == 1)
@@ -120,13 +121,59 @@ struct TimelineViewModelTests {
 
     viewModel.moveSelectedMonth(by: -12)
 
+    #expect(viewModel.monthTransitionDirection == .previous)
     #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2025)
     #expect(calendar.component(.month, from: viewModel.selectedMonth) == 5)
 
     viewModel.moveSelectedMonth(by: 13)
 
+    #expect(viewModel.monthTransitionDirection == .next)
     #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2026)
     #expect(calendar.component(.month, from: viewModel.selectedMonth) == 6)
+  }
+
+  @Test
+  func monthNavigationDirectionMatchesMoveDirection() async throws {
+    let calendar = calendarForTimelineTests()
+    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
+    let viewModel = TimelineViewModel(
+      journalRepository: PreviewJournalRepository(entries: []),
+      calendar: calendar,
+      now: { now }
+    )
+
+    viewModel.moveSelectedMonth(by: 1)
+
+    #expect(viewModel.monthTransitionDirection == .next)
+
+    viewModel.moveSelectedMonth(by: -1)
+
+    #expect(viewModel.monthTransitionDirection == .previous)
+
+    viewModel.moveSelectedMonth(by: 0)
+
+    #expect(viewModel.monthTransitionDirection == .none)
+  }
+
+  @Test
+  func selectingDateCalculatesMonthTransitionDirection() async throws {
+    let calendar = calendarForTimelineTests()
+    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
+    let futureDate = fixtureDate(calendar: calendar, year: 2026, month: 8, day: 4)
+    let pastDate = fixtureDate(calendar: calendar, year: 2026, month: 3, day: 20)
+    let viewModel = TimelineViewModel(
+      journalRepository: PreviewJournalRepository(entries: []),
+      calendar: calendar,
+      now: { now }
+    )
+
+    viewModel.selectDate(futureDate)
+
+    #expect(viewModel.monthTransitionDirection == .next)
+
+    viewModel.selectDate(pastDate)
+
+    #expect(viewModel.monthTransitionDirection == .previous)
   }
 
   @Test

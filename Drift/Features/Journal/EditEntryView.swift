@@ -31,6 +31,8 @@ struct EditEntryView: View {
 
       content
     }
+    .navigationTitle("Edit Drift")
+    .navigationBarTitleDisplayMode(.large)
     .navigationBarBackButtonHidden()
     .toolbar {
       ToolbarItem(placement: .topBarLeading) {
@@ -108,11 +110,6 @@ struct EditEntryView: View {
     @Bindable var bindableViewModel = viewModel
 
     return VStack(alignment: .leading, spacing: AppSpacing.l) {
-      Text("Edit Drift")
-        .font(AppTypography.appTitle)
-        .foregroundStyle(AppColors.textPrimary)
-        .accessibilityAddTraits(.isHeader)
-
       VStack(alignment: .leading, spacing: AppSpacing.s) {
         Text("Title")
           .font(AppTypography.cardTitle)

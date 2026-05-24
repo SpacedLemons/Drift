@@ -14,18 +14,30 @@ final class EntryDetailViewModel {
   @ObservationIgnored
   private let journalRepository: any JournalRepository
   @ObservationIgnored
+  private let spaceRepository: any SpaceRepository & Sendable
+  @ObservationIgnored
+  private let contextPackService: any ContextPackService & Sendable
+  @ObservationIgnored
+  private let exportService: any ExportService & Sendable
+  @ObservationIgnored
   let imageAttachmentService: any ImageAttachmentService
   @ObservationIgnored
   private let customThemeService: any CustomThemeService
+  @ObservationIgnored
+  private let now: () -> Date
 
   let entryID: UUID
 
   private(set) var entry: JournalEntry?
+  private(set) var spaces: [DriftSpace] = []
+  private(set) var relatedContextPacks: [ContextPack] = []
   private(set) var isLoading = false
   private(set) var isSaving = false
   private(set) var isDeleting = false
+  private(set) var isExporting = false
   private(set) var errorMessage: String?
 
+  var exportShareItem: ExportShareItem?
   var isEditing = false
   var editedTitle = ""
   var editedTranscript = ""
@@ -46,13 +58,21 @@ final class EntryDetailViewModel {
   init(
     entryID: UUID,
     journalRepository: any JournalRepository,
+    spaceRepository: any SpaceRepository & Sendable = LocalSpaceRepository(),
+    contextPackService: any ContextPackService & Sendable = LocalContextPackService(),
+    exportService: any ExportService & Sendable = LocalMarkdownExportService(),
     imageAttachmentService: any ImageAttachmentService = PreviewImageAttachmentService(),
-    customThemeService: any CustomThemeService = PreviewCustomThemeService()
+    customThemeService: any CustomThemeService = PreviewCustomThemeService(),
+    now: @escaping () -> Date = Date.init
   ) {
     self.entryID = entryID
     self.journalRepository = journalRepository
+    self.spaceRepository = spaceRepository
+    self.contextPackService = contextPackService
+    self.exportService = exportService
     self.imageAttachmentService = imageAttachmentService
     self.customThemeService = customThemeService
+    self.now = now
   }
 
   var durationText: String? {
@@ -91,6 +111,7 @@ final class EntryDetailViewModel {
       }
 
       entry = loadedEntry
+      await loadSupplementaryContext(for: loadedEntry)
       if !isEditing {
         seedEditState(from: loadedEntry)
       }
@@ -99,6 +120,22 @@ final class EntryDetailViewModel {
     }
 
     isLoading = false
+  }
+
+  func spaceNames(for entry: JournalEntry) -> [String] {
+    entry.spaceIds.compactMap { spaceID in
+      spaces.first { $0.id == spaceID }?.name
+    }
+  }
+
+  func spaceLabels(for entry: JournalEntry) -> [String] {
+    let names = spaceNames(for: entry)
+    if !names.isEmpty {
+      return names
+    }
+
+    guard !entry.spaceIds.isEmpty else { return [] }
+    return ["\(entry.spaceIds.count) Spaces"]
   }
 
   func loadCustomThemes() async {
@@ -199,6 +236,30 @@ final class EntryDetailViewModel {
     } catch {
       errorMessage = "We could not delete this Drift. Please try again."
       return false
+    }
+  }
+
+  func exportCurrentEntry() async -> URL? {
+    guard let entry, !isExporting else { return nil }
+
+    isExporting = true
+    errorMessage = nil
+    exportShareItem = nil
+    defer { isExporting = false }
+
+    do {
+      let fileURL = try await exportService.export(
+        entries: [entry],
+        exportedAt: now()
+      )
+      exportShareItem = ExportShareItem(url: fileURL)
+      return fileURL
+    } catch let error as ExportServiceError {
+      errorMessage = error.localizedDescription
+      return nil
+    } catch {
+      errorMessage = "We could not export this Drift. Please try again."
+      return nil
     }
   }
 
@@ -336,5 +397,14 @@ final class EntryDetailViewModel {
     editedImageAttachments = entry.imageAttachments
     pendingTag = ""
     pendingCustomThemeName = ""
+  }
+
+  private func loadSupplementaryContext(for entry: JournalEntry) async {
+    spaces = (try? await spaceRepository.fetchSpaces()) ?? []
+    let contextPacks = (try? await contextPackService.fetchContextPacks()) ?? []
+    relatedContextPacks = contextPacks.filter { pack in
+      pack.driftIds.contains(entry.id)
+        || !Set(pack.spaceIds).isDisjoint(with: Set(entry.spaceIds))
+    }
   }
 }

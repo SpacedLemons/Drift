@@ -8,6 +8,12 @@
 import Foundation
 import Observation
 
+enum CalendarMonthTransitionDirection: Equatable {
+  case none
+  case previous
+  case next
+}
+
 @MainActor
 @Observable
 final class TimelineViewModel {
@@ -28,6 +34,7 @@ final class TimelineViewModel {
   var selectedMonth: Date
   var selectedDriftTypeFilter: DriftType?
   var isCalendarExpanded = true
+  private(set) var monthTransitionDirection: CalendarMonthTransitionDirection = .none
 
   init(
     journalRepository: any JournalRepository,
@@ -59,6 +66,10 @@ final class TimelineViewModel {
 
   var selectedMonthTitle: String {
     selectedMonth.formatted(.dateTime.month(.wide).year())
+  }
+
+  var selectedMonthID: String {
+    Self.calendarIdentity(for: selectedMonth, calendar: calendar)
   }
 
   var weekdaySymbols: [String] {
@@ -134,7 +145,7 @@ final class TimelineViewModel {
     } else {
       selectedDate = date
       if let date {
-        selectedMonth = Self.startOfMonth(for: date, calendar: calendar)
+        updateSelectedMonth(Self.startOfMonth(for: date, calendar: calendar))
       }
     }
   }
@@ -144,7 +155,13 @@ final class TimelineViewModel {
   }
 
   func moveSelectedMonth(by value: Int) {
+    guard value != 0 else {
+      monthTransitionDirection = .none
+      return
+    }
+
     if let month = calendar.date(byAdding: .month, value: value, to: selectedMonth) {
+      monthTransitionDirection = value > 0 ? .next : .previous
       selectedMonth = Self.startOfMonth(for: month, calendar: calendar)
     }
   }
@@ -165,6 +182,17 @@ final class TimelineViewModel {
   private func matchesSelectedDriftType(_ entry: JournalEntry) -> Bool {
     guard let selectedDriftTypeFilter else { return true }
     return entry.driftType == selectedDriftTypeFilter
+  }
+
+  private func updateSelectedMonth(_ month: Date) {
+    if calendar.isDate(month, equalTo: selectedMonth, toGranularity: .month) {
+      monthTransitionDirection = .none
+      selectedMonth = month
+      return
+    }
+
+    monthTransitionDirection = month > selectedMonth ? .next : .previous
+    selectedMonth = month
   }
 
   private static func startOfMonth(for date: Date, calendar: Calendar) -> Date {

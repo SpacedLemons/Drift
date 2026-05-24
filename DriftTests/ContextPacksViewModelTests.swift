@@ -231,6 +231,53 @@ struct ContextPacksViewModelTests {
   }
 
   @Test
+  func editingSavedPackLoadsDraftAndUpdatesExistingPack() async throws {
+    let space = DriftSpace(
+      id: fixtureUUID("D1000000-0000-0000-0000-000000000012"),
+      name: "Goals",
+      description: "Goals",
+      icon: "target"
+    )
+    let drift = JournalEntry(
+      id: fixtureUUID("D1000000-0000-0000-0000-000000000013"),
+      createdAt: Date(timeIntervalSince1970: 1_778_600_000),
+      transcript: "A selected goal.",
+      driftType: .goal,
+      spaceIds: [space.id]
+    )
+    let pack = ContextPack(
+      id: fixtureUUID("D1000000-0000-0000-0000-000000000014"),
+      name: "Original Context",
+      description: "Original description",
+      driftIds: [drift.id],
+      spaceIds: [space.id],
+      createdAt: Date(timeIntervalSince1970: 1_778_500_000)
+    )
+    let contextPackService = LocalContextPackService(contextPacks: [pack])
+    let viewModel = ContextPacksViewModel(
+      driftRepository: JournalBackedDriftRepository(
+        journalRepository: PreviewJournalRepository(entries: [drift])
+      ),
+      spaceRepository: LocalSpaceRepository(spaces: [space]),
+      contextPackService: contextPackService,
+      contextExportService: LocalContextExportService()
+    )
+
+    await viewModel.load()
+    viewModel.editPack(pack)
+    viewModel.draftName = "Updated Context"
+    await viewModel.saveDraftPack()
+
+    let packs = try await contextPackService.fetchContextPacks()
+
+    #expect(viewModel.selectedSpaceIds == [space.id])
+    #expect(viewModel.selectedDriftIds == [drift.id])
+    #expect(packs.count == 1)
+    #expect(packs.first?.id == pack.id)
+    #expect(packs.first?.name == "Updated Context")
+  }
+
+  @Test
   func startingNewDraftAllowsAnotherContextPack() async throws {
     let contextPackService = LocalContextPackService()
     let viewModel = ContextPacksViewModel(

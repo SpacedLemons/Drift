@@ -14,6 +14,7 @@ struct SpacesView: View {
   @State private var spacePendingDeletion: DriftSpace?
 
   let reloadToken: UUID
+  let onCaptureInSpace: (DriftSpace) -> Void
 
   private let columns = [
     GridItem(.flexible(), spacing: AppSpacing.m),
@@ -23,11 +24,13 @@ struct SpacesView: View {
   init(
     viewModel: SpacesViewModel,
     contextPacksViewModel: ContextPacksViewModel,
-    reloadToken: UUID = UUID()
+    reloadToken: UUID = UUID(),
+    onCaptureInSpace: @escaping (DriftSpace) -> Void = { _ in }
   ) {
     _viewModel = State(initialValue: viewModel)
     _contextPacksViewModel = State(initialValue: contextPacksViewModel)
     self.reloadToken = reloadToken
+    self.onCaptureInSpace = onCaptureInSpace
   }
 
   var body: some View {
@@ -47,7 +50,8 @@ struct SpacesView: View {
         .padding(AppSpacing.l)
       }
     }
-    .navigationBarTitleDisplayMode(.inline)
+    .navigationTitle("Spaces")
+    .navigationBarTitleDisplayMode(.large)
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         Button {
@@ -105,11 +109,6 @@ struct SpacesView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Spaces")
-        .font(AppTypography.appTitle)
-        .foregroundStyle(AppColors.textPrimary)
-        .accessibilityAddTraits(.isHeader)
-
       Text("Boards for grouping Drifts into goals, ideas, moodboards, and projects.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
@@ -174,7 +173,8 @@ struct SpacesView: View {
               SpaceDetailView(
                 viewModel: viewModel,
                 space: summary.space,
-                contextPacksViewModel: contextPacksViewModel
+                contextPacksViewModel: contextPacksViewModel,
+                onCaptureInSpace: onCaptureInSpace
               )
             } label: {
               SpaceCard(summary: summary)

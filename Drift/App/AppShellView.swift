@@ -36,7 +36,8 @@ struct AppShellView: View {
     self.launchActionStore = launchActionStore
     _journalHomeViewModel = State(
       initialValue: JournalHomeViewModel(
-        journalRepository: environment.dependencies.journalRepository
+        journalRepository: environment.dependencies.journalRepository,
+        spaceRepository: environment.dependencies.spaceRepository
       )
     )
     _spacesViewModel = State(
@@ -82,6 +83,7 @@ struct AppShellView: View {
           onEntrySelected: coordinator.showJournalEntry,
           onRecordTapped: {
             requestNewEntry {
+              captureCoordinator.clearPreselectedSpaceIds()
               coordinator.startCapture()
             }
           }
@@ -93,6 +95,9 @@ struct AppShellView: View {
               viewModel: EntryDetailViewModel(
                 entryID: id,
                 journalRepository: environment.dependencies.journalRepository,
+                spaceRepository: environment.dependencies.spaceRepository,
+                contextPackService: environment.dependencies.contextPackService,
+                exportService: environment.dependencies.exportService,
                 imageAttachmentService: environment.dependencies.imageAttachmentService,
                 customThemeService: environment.dependencies.customThemeService
               ),
@@ -111,6 +116,9 @@ struct AppShellView: View {
               viewModel: EntryDetailViewModel(
                 entryID: id,
                 journalRepository: environment.dependencies.journalRepository,
+                spaceRepository: environment.dependencies.spaceRepository,
+                contextPackService: environment.dependencies.contextPackService,
+                exportService: environment.dependencies.exportService,
                 imageAttachmentService: environment.dependencies.imageAttachmentService,
                 customThemeService: environment.dependencies.customThemeService
               ),
@@ -134,7 +142,8 @@ struct AppShellView: View {
         SpacesView(
           viewModel: spacesViewModel,
           contextPacksViewModel: contextPacksViewModel,
-          reloadToken: spacesReloadToken
+          reloadToken: spacesReloadToken,
+          onCaptureInSpace: startCaptureInSpace
         )
       }
       .tabItem { AppTab.spaces.label }
@@ -285,13 +294,19 @@ struct AppShellView: View {
     case .recording:
       RecordingView(
         viewModel: captureCoordinator.makeRecordingViewModel(),
-        onCancel: coordinator.backToJournal,
+        onCancel: {
+          captureCoordinator.clearPreselectedSpaceIds()
+          coordinator.backToJournal()
+        },
         onFinished: coordinator.showProcessing
       )
     case .processing(let result):
       ProcessingView(
         viewModel: captureCoordinator.makeProcessingViewModel(recordingResult: result),
-        onCancel: coordinator.backToJournal,
+        onCancel: {
+          captureCoordinator.clearPreselectedSpaceIds()
+          coordinator.backToJournal()
+        },
         onRecordAgain: {
           requestNewEntry {
             coordinator.addAnotherEntry()
@@ -302,9 +317,13 @@ struct AppShellView: View {
     case .review(let draft):
       ReviewEntryView(
         viewModel: captureCoordinator.makeReviewEntryViewModel(draft: draft),
-        onCancel: coordinator.backToJournal,
+        onCancel: {
+          captureCoordinator.clearPreselectedSpaceIds()
+          coordinator.backToJournal()
+        },
         onSaved: { entry in
           refreshJournalData()
+          captureCoordinator.clearPreselectedSpaceIds()
           coordinator.showSaved(entry)
         }
       )
@@ -313,16 +332,19 @@ struct AppShellView: View {
         viewModel: captureCoordinator.makeSavedEntryViewModel(entry: entry),
         onViewEntry: {
           refreshJournalData()
+          captureCoordinator.clearPreselectedSpaceIds()
           coordinator.viewSavedEntry(entry)
         },
         onAddAnother: {
           refreshJournalData()
           requestNewEntry {
+            captureCoordinator.clearPreselectedSpaceIds()
             coordinator.addAnotherEntry()
           }
         },
         onBackToJournal: {
           refreshJournalData()
+          captureCoordinator.clearPreselectedSpaceIds()
           coordinator.backToJournal()
         }
       )
@@ -335,6 +357,14 @@ struct AppShellView: View {
     timelineReloadToken = UUID()
   }
 
+  private func startCaptureInSpace(_ space: DriftSpace) {
+    requestNewEntry {
+      captureCoordinator.setPreselectedSpaceIds([space.id])
+      selectedTab = .capture
+      coordinator.startCapture()
+    }
+  }
+
   @ViewBuilder
   private func timelineDestination(_ route: AppRoute) -> some View {
     switch route {
@@ -343,6 +373,9 @@ struct AppShellView: View {
         viewModel: EntryDetailViewModel(
           entryID: id,
           journalRepository: environment.dependencies.journalRepository,
+          spaceRepository: environment.dependencies.spaceRepository,
+          contextPackService: environment.dependencies.contextPackService,
+          exportService: environment.dependencies.exportService,
           imageAttachmentService: environment.dependencies.imageAttachmentService,
           customThemeService: environment.dependencies.customThemeService
         ),
@@ -361,6 +394,9 @@ struct AppShellView: View {
         viewModel: EntryDetailViewModel(
           entryID: id,
           journalRepository: environment.dependencies.journalRepository,
+          spaceRepository: environment.dependencies.spaceRepository,
+          contextPackService: environment.dependencies.contextPackService,
+          exportService: environment.dependencies.exportService,
           imageAttachmentService: environment.dependencies.imageAttachmentService,
           customThemeService: environment.dependencies.customThemeService
         ),
@@ -393,6 +429,7 @@ struct AppShellView: View {
     case .startJournalEntry:
       selectedTab = .capture
       requestNewEntry {
+        captureCoordinator.clearPreselectedSpaceIds()
         guard coordinator.startCaptureFromReminder() else {
           launchActionStore.reportRoutingError()
           return
