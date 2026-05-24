@@ -62,5 +62,8 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 
+# Local verification screenshots
+Docs/Screenshots/
+
 # Local project brief
 goal.md
