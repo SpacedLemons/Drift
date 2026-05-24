@@ -44,7 +44,7 @@ final class InsightsViewModel {
     } catch {
       entries = []
       summary = .empty
-      errorMessage = "We could not load insights right now."
+      errorMessage = "We could not load mood history right now."
     }
 
     isLoading = false

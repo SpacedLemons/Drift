@@ -10,7 +10,10 @@ import SwiftData
 enum SwiftDataContainer {
   static func make(inMemory: Bool = false) throws -> ModelContainer {
     let schema = Schema([
-      JournalEntryEntity.self
+      JournalEntryEntity.self,
+      DriftSpaceEntity.self,
+      ContextPackEntity.self,
+      DefaultSeedStateEntity.self,
     ])
     // Add explicit migration plans before removing or renaming persisted fields.
     // New codable metadata fields should keep safe empty defaults.

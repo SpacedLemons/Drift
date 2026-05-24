@@ -43,6 +43,8 @@ struct SettingsViewModelTests {
     #expect(rows.contains { $0.route == .backupRestore })
     #expect(rows.contains { $0.title == "Backup & Restore" })
     #expect(rows.contains { $0.subtitle == "iCloud backup, restore, and transfer options" })
+    #expect(rows.contains { $0.route == .privacy })
+    #expect(rows.contains { $0.subtitle == "Device storage, transcription, and sharing controls" })
   }
 
   @Test

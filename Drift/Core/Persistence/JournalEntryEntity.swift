@@ -25,6 +25,7 @@ final class JournalEntryEntity {
   var sourceRawValue: String
   var isFavorite: Bool
   var driftTypeRawValue: String?
+  var spaceIdsData: Data?
   var aiVisibilityRawValue: String?
   var driftStatusRawValue: String?
 
@@ -44,6 +45,7 @@ final class JournalEntryEntity {
     sourceRawValue: String,
     isFavorite: Bool,
     driftTypeRawValue: String? = nil,
+    spaceIdsData: Data? = nil,
     aiVisibilityRawValue: String? = nil,
     driftStatusRawValue: String? = nil
   ) {
@@ -62,6 +64,7 @@ final class JournalEntryEntity {
     self.sourceRawValue = sourceRawValue
     self.isFavorite = isFavorite
     self.driftTypeRawValue = driftTypeRawValue
+    self.spaceIdsData = spaceIdsData
     self.aiVisibilityRawValue = aiVisibilityRawValue
     self.driftStatusRawValue = driftStatusRawValue
   }

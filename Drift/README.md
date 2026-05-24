@@ -1,15 +1,15 @@
 # Drift
 
-Drift is a private voice-first personal context board for iOS. It lets you capture a Drift by voice, transcribe it with Apple Speech, review the text, choose a Drift type, save it locally, search past Drifts, view simple local insights, set local reminders, and export local Markdown.
+Drift is a private voice-first personal context board for iOS. It lets you capture a Drift by voice, transcribe it with Apple Speech, review the text, choose a Drift type, save it locally, browse and filter past Drifts in Timeline, view local mood history, set local reminders, and export local Markdown.
 
 ## Product Principles
 
 - Private by default: Drifts are stored on this device.
 - Offline-first: core Drift browsing, storage, settings, reminders, and export are local.
 - No account: Drift does not require sign-in for the MVP.
-- Local storage: Reflection Drifts are persisted through the existing SwiftData journal store.
+- Local storage: Drifts are persisted through the existing SwiftData journal store with safe compatibility defaults.
 - User-controlled export: exports are created locally and shared only when the user chooses.
-- User-controlled context: Context Packs are local placeholders and can only be copied manually.
+- User-controlled context: Context Packs are local and can be copied or shared manually.
 
 ## Tech Stack
 

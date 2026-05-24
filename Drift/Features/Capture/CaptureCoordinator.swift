@@ -35,6 +35,7 @@ final class CaptureCoordinator {
     ReviewEntryViewModel(
       draft: draft,
       journalRepository: dependencies.journalRepository,
+      spaceRepository: dependencies.spaceRepository,
       audioPlaybackService: dependencies.audioPlaybackService,
       imageAttachmentService: dependencies.imageAttachmentService,
       customThemeService: dependencies.customThemeService,

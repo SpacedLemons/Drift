@@ -8,18 +8,18 @@
 import SwiftUI
 
 enum AppTab: Hashable {
-  case journal
+  case capture
   case spaces
-  case insights
+  case timeline
   case settings
 
   @ViewBuilder
   var label: some View {
     switch self {
-    case .journal: Label("Timeline", systemImage: AppIcons.book)
-    case .spaces: Label("Spaces", systemImage: AppIcons.spaces)
-    case .insights: Label("Insights", systemImage: AppIcons.chart)
-    case .settings: Label("Settings", systemImage: AppIcons.settings)
+    case .capture: Label("Capture", systemImage: "mic")
+    case .spaces: Label("Spaces", systemImage: "square.grid.2x2")
+    case .timeline: Label("Timeline", systemImage: "clock")
+    case .settings: Label("Settings", systemImage: "gearshape")
     }
   }
 }

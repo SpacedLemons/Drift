@@ -40,34 +40,48 @@ struct DriftSpace: Identifiable, Hashable, Codable, Sendable {
     self.aiVisibility = aiVisibility
   }
 
-  static let placeholderSpaces: [DriftSpace] = [
+  static let defaultSpaces: [DriftSpace] = [
     DriftSpace(
       id: uuid("D0000000-0000-0000-0000-000000000001"),
-      name: "Inbox",
-      description: "Fresh Drifts before they are grouped.",
-      icon: "tray",
-      isPinned: true
-    ),
-    DriftSpace(
-      id: uuid("D0000000-0000-0000-0000-000000000002"),
       name: "Goals",
       description: "Goals, milestones, and next steps.",
       icon: "target",
       isPinned: true
     ),
     DriftSpace(
-      id: uuid("D0000000-0000-0000-0000-000000000003"),
+      id: uuid("D0000000-0000-0000-0000-000000000002"),
       name: "Ideas",
       description: "Ideas, sparks, and things worth revisiting.",
-      icon: "lightbulb"
+      icon: "lightbulb",
+      isPinned: true
     ),
     DriftSpace(
-      id: uuid("D0000000-0000-0000-0000-000000000004"),
+      id: uuid("D0000000-0000-0000-0000-000000000003"),
       name: "Memories",
       description: "Moments and context you may want later.",
       icon: "clock.arrow.circlepath"
     ),
+    DriftSpace(
+      id: uuid("D0000000-0000-0000-0000-000000000004"),
+      name: "Moodboard",
+      description: "Visuals, moods, and patterns you are noticing.",
+      icon: AppIcons.mood
+    ),
+    DriftSpace(
+      id: uuid("D0000000-0000-0000-0000-000000000005"),
+      name: "OpenAI Career",
+      description: "Application notes, interview prep, and role context.",
+      icon: "sparkles"
+    ),
+    DriftSpace(
+      id: uuid("D0000000-0000-0000-0000-000000000006"),
+      name: "Drift App",
+      description: "Ideas and decisions for building Drift.",
+      icon: "app.badge"
+    ),
   ]
+
+  static let placeholderSpaces = defaultSpaces
 
   private static func uuid(_ rawValue: String) -> UUID {
     UUID(uuidString: rawValue) ?? UUID()

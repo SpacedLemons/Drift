@@ -10,17 +10,13 @@ extension AppDependencyContainer {
     entries: [JournalEntry] = PreviewData.journalEntries
   ) -> AppDependencyContainer {
     let journalRepository = PreviewJournalRepository(entries: entries)
-    let driftClassificationService = LocalDriftClassificationService()
     let driftRepository = JournalBackedDriftRepository(journalRepository: journalRepository)
 
     return AppDependencyContainer(
       journalRepository: journalRepository,
       driftRepository: driftRepository,
-      driftCapturePipeline: LocalDriftCapturePipeline(
-        classificationService: driftClassificationService
-      ),
-      driftClassificationService: driftClassificationService,
       driftSearchService: LocalDriftSearchService(driftRepository: driftRepository),
+      spaceRepository: LocalSpaceRepository(),
       contextPackService: LocalContextPackService(),
       contextExportService: LocalContextExportService(),
       audioRecordingService: PreviewAudioRecordingService(),

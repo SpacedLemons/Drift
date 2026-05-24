@@ -73,7 +73,7 @@ final class SettingsViewModel {
         route: .privacy,
         icon: AppIcons.lockShield,
         title: "Privacy",
-        subtitle: "Device storage, transcription, and future AI",
+        subtitle: "Device storage, transcription, and sharing controls",
         trailingValue: nil
       ),
       SettingsNavigationRowDescriptor(

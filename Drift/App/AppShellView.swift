@@ -15,11 +15,15 @@ struct AppShellView: View {
   @State private var journalHomeViewModel: JournalHomeViewModel
   @State private var spacesViewModel: SpacesViewModel
   @State private var contextPacksViewModel: ContextPacksViewModel
+  @State private var timelineViewModel: TimelineViewModel
+  @State private var insightsViewModel: InsightsViewModel
   @State private var captureCoordinator: CaptureCoordinator
   @State private var settingsCoordinator: SettingsCoordinator
-  @State private var selectedTab: AppTab = .journal
+  @State private var selectedTab: AppTab = .capture
+  @State private var timelinePath: [AppRoute] = []
   @State private var journalReloadToken = UUID()
-  @State private var insightsReloadToken = UUID()
+  @State private var spacesReloadToken = UUID()
+  @State private var timelineReloadToken = UUID()
   @State private var entryLimitAlert: EntryLimitAlert?
 
   init(
@@ -35,12 +39,29 @@ struct AppShellView: View {
         journalRepository: environment.dependencies.journalRepository
       )
     )
-    _spacesViewModel = State(initialValue: SpacesViewModel())
+    _spacesViewModel = State(
+      initialValue: SpacesViewModel(
+        spaceRepository: environment.dependencies.spaceRepository,
+        driftRepository: environment.dependencies.driftRepository,
+        contextPackService: environment.dependencies.contextPackService
+      )
+    )
     _contextPacksViewModel = State(
       initialValue: ContextPacksViewModel(
         driftRepository: environment.dependencies.driftRepository,
+        spaceRepository: environment.dependencies.spaceRepository,
         contextPackService: environment.dependencies.contextPackService,
         contextExportService: environment.dependencies.contextExportService
+      )
+    )
+    _timelineViewModel = State(
+      initialValue: TimelineViewModel(
+        journalRepository: environment.dependencies.journalRepository
+      )
+    )
+    _insightsViewModel = State(
+      initialValue: InsightsViewModel(
+        journalRepository: environment.dependencies.journalRepository
       )
     )
     _captureCoordinator = State(
@@ -106,28 +127,35 @@ struct AppShellView: View {
           }
         }
       }
-      .tabItem { AppTab.journal.label }
-      .tag(AppTab.journal)
+      .tabItem { AppTab.capture.label }
+      .tag(AppTab.capture)
 
       NavigationStack {
         SpacesView(
           viewModel: spacesViewModel,
-          contextPacksViewModel: contextPacksViewModel
+          contextPacksViewModel: contextPacksViewModel,
+          reloadToken: spacesReloadToken
         )
       }
       .tabItem { AppTab.spaces.label }
       .tag(AppTab.spaces)
 
-      NavigationStack {
-        InsightsView(
-          viewModel: InsightsViewModel(
-            journalRepository: environment.dependencies.journalRepository
-          ),
-          reloadToken: insightsReloadToken
+      NavigationStack(path: $timelinePath) {
+        TimelineView(
+          viewModel: timelineViewModel,
+          reloadToken: timelineReloadToken,
+          moodGraphViewModel: insightsViewModel,
+          moodGraphReloadToken: timelineReloadToken,
+          onEntrySelected: { entry in
+            timelinePath.append(.journalEntry(entry.id))
+          }
         )
+        .navigationDestination(for: AppRoute.self) { route in
+          timelineDestination(route)
+        }
       }
-      .tabItem { AppTab.insights.label }
-      .tag(AppTab.insights)
+      .tabItem { AppTab.timeline.label }
+      .tag(AppTab.timeline)
 
       NavigationStack(path: $bindableSettingsCoordinator.path) {
         SettingsView(
@@ -303,7 +331,58 @@ struct AppShellView: View {
 
   private func refreshJournalData() {
     journalReloadToken = UUID()
-    insightsReloadToken = UUID()
+    spacesReloadToken = UUID()
+    timelineReloadToken = UUID()
+  }
+
+  @ViewBuilder
+  private func timelineDestination(_ route: AppRoute) -> some View {
+    switch route {
+    case .journalEntry(let id):
+      EntryDetailView(
+        viewModel: EntryDetailViewModel(
+          entryID: id,
+          journalRepository: environment.dependencies.journalRepository,
+          imageAttachmentService: environment.dependencies.imageAttachmentService,
+          customThemeService: environment.dependencies.customThemeService
+        ),
+        reloadToken: timelineReloadToken,
+        onEditRequested: {
+          timelinePath.append(.editJournalEntry(id))
+        },
+        onEntryChanged: refreshJournalData,
+        onEntryDeleted: {
+          refreshJournalData()
+          timelinePath.removeAll()
+        }
+      )
+    case .editJournalEntry(let id):
+      EditEntryView(
+        viewModel: EntryDetailViewModel(
+          entryID: id,
+          journalRepository: environment.dependencies.journalRepository,
+          imageAttachmentService: environment.dependencies.imageAttachmentService,
+          customThemeService: environment.dependencies.customThemeService
+        ),
+        onCancel: {
+          backToTimelineEntryDetail(id)
+        },
+        onSaved: {
+          refreshJournalData()
+          backToTimelineEntryDetail(id)
+        }
+      )
+    case .capture(_):
+      EmptyView()
+    }
+  }
+
+  private func backToTimelineEntryDetail(_ id: UUID) {
+    if let detailIndex = timelinePath.lastIndex(of: .journalEntry(id)) {
+      timelinePath = Array(timelinePath.prefix(through: detailIndex))
+    } else {
+      timelinePath = [.journalEntry(id)]
+    }
   }
 
   @MainActor
@@ -312,7 +391,7 @@ struct AppShellView: View {
 
     switch action {
     case .startJournalEntry:
-      selectedTab = .journal
+      selectedTab = .capture
       requestNewEntry {
         guard coordinator.startCaptureFromReminder() else {
           launchActionStore.reportRoutingError()

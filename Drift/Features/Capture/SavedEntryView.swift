@@ -69,7 +69,7 @@ struct SavedEntryView: View {
               onBackToJournal()
             },
             label: {
-              Text("Back to Timeline")
+              Text("Back to Capture")
             }
           )
           .buttonStyle(.plain)

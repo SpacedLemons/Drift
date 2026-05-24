@@ -22,7 +22,10 @@ struct JournalCard: View {
           HStack(spacing: AppSpacing.xs) {
             Image(systemName: AppIcons.clock)
               .font(.caption)
-            Text(entry.createdAt, format: .dateTime.weekday(.abbreviated).hour().minute())
+            Text(
+              entry.createdAt,
+              format: .dateTime.month(.abbreviated).day().hour().minute()
+            )
           }
           .font(AppTypography.caption)
           .foregroundStyle(AppColors.textTertiary)
@@ -44,8 +47,10 @@ struct JournalCard: View {
         .lineLimit(3)
         .fixedSize(horizontal: false, vertical: true)
 
-      HStack(spacing: AppSpacing.xs) {
-        MoodPill(mood: entry.mood)
+      FlowLayout(spacing: AppSpacing.xs) {
+        if let mood = entry.mood {
+          MoodPill(mood: mood)
+        }
 
         Label(entry.driftType.displayName, systemImage: entry.driftType.symbolName)
           .font(AppTypography.caption)
@@ -67,6 +72,26 @@ struct JournalCard: View {
 
         ForEach(entry.customThemes.prefix(max(0, 2 - entry.themes.count))) { theme in
           Label(theme.displayName, systemImage: AppIcons.tag)
+            .font(AppTypography.caption)
+            .foregroundStyle(AppColors.textSecondary)
+            .padding(.horizontal, AppSpacing.s)
+            .padding(.vertical, AppSpacing.xs)
+            .background(AppColors.surfaceRaised, in: Capsule())
+            .lineLimit(1)
+        }
+
+        ForEach(entry.tags.prefix(2), id: \.self) { tag in
+          Label(tag, systemImage: AppIcons.tag)
+            .font(AppTypography.caption)
+            .foregroundStyle(AppColors.textSecondary)
+            .padding(.horizontal, AppSpacing.s)
+            .padding(.vertical, AppSpacing.xs)
+            .background(AppColors.surfaceRaised, in: Capsule())
+            .lineLimit(1)
+        }
+
+        if !entry.spaceIds.isEmpty {
+          Label("\(entry.spaceIds.count) Spaces", systemImage: AppIcons.spaces)
             .font(AppTypography.caption)
             .foregroundStyle(AppColors.textSecondary)
             .padding(.horizontal, AppSpacing.s)

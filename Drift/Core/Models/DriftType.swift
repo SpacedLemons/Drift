@@ -19,6 +19,19 @@ enum DriftType: String, CaseIterable, Identifiable, Codable, Hashable, Sendable 
 
   var id: String { rawValue }
 
+  static let reviewSelectionOrder: [DriftType] = [
+    .reflection,
+    .thought,
+    .goal,
+    .idea,
+    .memory,
+    .mood,
+    .decision,
+    .task,
+    .visual,
+    .context,
+  ]
+
   var displayName: String {
     switch self {
     case .thought: "Thought"

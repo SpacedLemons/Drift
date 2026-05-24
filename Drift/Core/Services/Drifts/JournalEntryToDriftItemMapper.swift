@@ -16,6 +16,7 @@ enum JournalEntryToDriftItemMapper {
       type: entry.driftType,
       mood: entry.mood,
       tags: entry.tags,
+      spaces: entry.spaceIds,
       attachments: entry.imageAttachments,
       source: DriftSource(entrySource: entry.source),
       aiVisibility: entry.aiVisibility,

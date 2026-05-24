@@ -29,6 +29,23 @@ struct DriftDomainModelTests {
   }
 
   @Test
+  func reviewSelectionShowsReflectionFirst() {
+    #expect(
+      DriftType.reviewSelectionOrder.map(\.displayName) == [
+        "Reflection",
+        "Thought",
+        "Goal",
+        "Idea",
+        "Memory",
+        "Mood",
+        "Decision",
+        "Task",
+        "Visual",
+        "Context",
+      ])
+  }
+
+  @Test
   func aiVisibilityDefaultsToPrivateLocalOnly() {
     let drift = DriftItem(
       createdAt: Date(timeIntervalSince1970: 1_778_600_000),
@@ -44,11 +61,65 @@ struct DriftDomainModelTests {
   }
 
   @Test
+  func aiVisibilityLabelsDoNotImplyLiveAIAccess() {
+    #expect(AIVisibility.privateLocalOnly.displayName == "Private local only")
+    #expect(AIVisibility.availableForInAppAI.displayName == "Prepared for future in-app AI")
+    #expect(AIVisibility.availableForChatGPT.displayName == "Manual ChatGPT export")
+    #expect(
+      AIVisibility.availableForInAppAI.privacyCopy
+        == "Prepared for future in-app AI features, but no AI access is active yet."
+    )
+    #expect(
+      AIVisibility.availableForChatGPT.privacyCopy
+        == "Can be included in a local context export that you copy when you choose."
+    )
+  }
+
+  @Test
+  func driftItemDisplayTitleUsesTitleBodyThenTypeFallback() {
+    let titledDrift = DriftItem(
+      createdAt: Date(timeIntervalSince1970: 1_778_600_000),
+      title: "  Focused morning  ",
+      body: "Body text.",
+      type: .thought
+    )
+    let bodyOnlyDrift = DriftItem(
+      createdAt: Date(timeIntervalSince1970: 1_778_600_000),
+      body: "\n  First line.\nSecond line.",
+      type: .idea
+    )
+    let emptyDrift = DriftItem(
+      createdAt: Date(timeIntervalSince1970: 1_778_600_000),
+      body: "   ",
+      type: .goal
+    )
+
+    #expect(titledDrift.displayTitle == "Focused morning")
+    #expect(bodyOnlyDrift.displayTitle == "First line.")
+    #expect(emptyDrift.displayTitle == "Goal Drift")
+    #expect(emptyDrift.previewText == "No Drift body yet")
+  }
+
+  @Test
+  func journalEntryDisplayTitleUsesFirstNonEmptyTranscriptLine() {
+    let entry = JournalEntry(
+      createdAt: Date(timeIntervalSince1970: 1_778_600_000),
+      transcript: "\n  Legacy first line.\nSecond line.",
+      driftType: .reflection
+    )
+
+    #expect(entry.displayTitle == "Legacy first line.")
+    #expect(entry.previewText == "Legacy first line.\nSecond line.")
+  }
+
+  @Test
   func journalEntryMapsToReflectionDriftByDefault() {
+    let spaceID = fixtureUUID("E0000000-0000-0000-0000-000000000099")
     let entry = JournalEntry(
       id: fixtureUUID("E0000000-0000-0000-0000-000000000001"),
       createdAt: Date(timeIntervalSince1970: 1_778_600_000),
-      transcript: "A legacy entry."
+      transcript: "A legacy entry.",
+      spaceIds: [spaceID]
     )
 
     let drift = JournalEntryToDriftItemMapper.driftItem(from: entry)
@@ -56,6 +127,7 @@ struct DriftDomainModelTests {
     #expect(drift.id == entry.id)
     #expect(drift.body == entry.transcript)
     #expect(drift.type == .reflection)
+    #expect(drift.spaces == [spaceID])
     #expect(drift.aiVisibility == .privateLocalOnly)
     #expect(drift.status == .active)
   }
@@ -144,6 +216,8 @@ struct DriftDomainModelTests {
     )
 
     #expect(markdown.contains("Drifts are private by default."))
+    #expect(markdown.contains("# Context Pack: Recent Drifts"))
+    #expect(markdown.contains("## Thoughts"))
     #expect(markdown.contains("Type: Thought"))
     #expect(markdown.contains("Focused morning"))
   }

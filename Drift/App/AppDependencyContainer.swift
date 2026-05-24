@@ -10,9 +10,8 @@ import SwiftData
 struct AppDependencyContainer: Sendable {
   let journalRepository: any JournalRepository & Sendable
   let driftRepository: any DriftRepository & Sendable
-  let driftCapturePipeline: any DriftCapturePipeline & Sendable
-  let driftClassificationService: any DriftClassificationService & Sendable
   let driftSearchService: any DriftSearchService & Sendable
+  let spaceRepository: any SpaceRepository & Sendable
   let contextPackService: any ContextPackService & Sendable
   let contextExportService: any ContextExportService & Sendable
   let audioRecordingService: any AudioRecordingService & Sendable
@@ -32,17 +31,13 @@ struct AppDependencyContainer: Sendable {
 
   static func unavailable() -> AppDependencyContainer {
     let journalRepository = UnavailableJournalRepository()
-    let driftClassificationService = LocalDriftClassificationService()
     let driftRepository = JournalBackedDriftRepository(journalRepository: journalRepository)
 
     return AppDependencyContainer(
       journalRepository: journalRepository,
       driftRepository: driftRepository,
-      driftCapturePipeline: LocalDriftCapturePipeline(
-        classificationService: driftClassificationService
-      ),
-      driftClassificationService: driftClassificationService,
       driftSearchService: LocalDriftSearchService(driftRepository: driftRepository),
+      spaceRepository: LocalSpaceRepository(),
       contextPackService: LocalContextPackService(),
       contextExportService: LocalContextExportService(),
       audioRecordingService: UnavailableAudioRecordingService(),
@@ -64,8 +59,8 @@ struct AppDependencyContainer: Sendable {
 
   static func live(modelContainer: ModelContainer) -> AppDependencyContainer {
     let journalRepository = SwiftDataJournalRepository(modelContainer: modelContainer)
-    let driftClassificationService = LocalDriftClassificationService()
     let driftRepository = JournalBackedDriftRepository(journalRepository: journalRepository)
+    let spaceRepository = SwiftDataSpaceRepository(modelContainer: modelContainer)
     let storeKitSubscriptionService = StoreKitSubscriptionService()
 
     #if DEBUG
@@ -96,12 +91,9 @@ struct AppDependencyContainer: Sendable {
     return AppDependencyContainer(
       journalRepository: journalRepository,
       driftRepository: driftRepository,
-      driftCapturePipeline: LocalDriftCapturePipeline(
-        classificationService: driftClassificationService
-      ),
-      driftClassificationService: driftClassificationService,
       driftSearchService: LocalDriftSearchService(driftRepository: driftRepository),
-      contextPackService: LocalContextPackService(),
+      spaceRepository: spaceRepository,
+      contextPackService: SwiftDataContextPackService(modelContainer: modelContainer),
       contextExportService: LocalContextExportService(),
       audioRecordingService: AVAudioRecordingService(),
       audioPlaybackService: AVAudioPlaybackService(),

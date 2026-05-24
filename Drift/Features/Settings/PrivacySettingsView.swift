@@ -41,6 +41,13 @@ struct PrivacySettingsView: View {
             message:
               "Exports are created locally and shared only when you choose. Audio playback uses the temporary recording before saving."
           )
+
+          SettingsInfoCard(
+            icon: AppIcons.contextPack,
+            title: "Context Packs",
+            message:
+              "Context Packs are local Markdown previews. Nothing is sent anywhere unless you copy or share it yourself."
+          )
         }
         .padding(AppSpacing.l)
       }

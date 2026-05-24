@@ -16,6 +16,8 @@ final class ReviewEntryViewModel {
   @ObservationIgnored
   private let journalRepository: any JournalRepository
   @ObservationIgnored
+  private let spaceRepository: any SpaceRepository
+  @ObservationIgnored
   private let audioPlaybackService: any AudioPlaybackService
   @ObservationIgnored
   let imageAttachmentService: any ImageAttachmentService
@@ -28,9 +30,12 @@ final class ReviewEntryViewModel {
   @ObservationIgnored
   private var playbackTimerTask: Task<Void, Never>?
 
+  var title: String
   var transcript: String
   var selectedDriftType: DriftType
   var selectedMood: Mood
+  var availableSpaces: [DriftSpace] = []
+  var selectedSpaceIds: [UUID] = []
   var selectedThemes: [JournalTheme]
   var selectedCustomThemes: [CustomJournalTheme]
   var availableCustomThemes: [CustomJournalTheme] = []
@@ -42,6 +47,8 @@ final class ReviewEntryViewModel {
   private(set) var isSaving = false
   private(set) var isLoadingCustomThemes = false
   private(set) var isProcessingImages = false
+  private(set) var isPreparingPlayback = false
+  private(set) var shouldShowPlaybackSection: Bool
   private(set) var isPlaybackAvailable = false
   private(set) var isPlayingAudio = false
   private(set) var playbackDuration: TimeInterval = 0
@@ -52,6 +59,7 @@ final class ReviewEntryViewModel {
   init(
     draft: ReviewEntryDraft,
     journalRepository: any JournalRepository,
+    spaceRepository: any SpaceRepository = LocalSpaceRepository(),
     audioPlaybackService: any AudioPlaybackService = PreviewAudioPlaybackService(),
     imageAttachmentService: any ImageAttachmentService = PreviewImageAttachmentService(),
     customThemeService: any CustomThemeService = PreviewCustomThemeService(),
@@ -60,17 +68,20 @@ final class ReviewEntryViewModel {
   ) {
     self.draft = draft
     self.journalRepository = journalRepository
+    self.spaceRepository = spaceRepository
     self.audioPlaybackService = audioPlaybackService
     self.imageAttachmentService = imageAttachmentService
     self.customThemeService = customThemeService
     self.dailyEntryLimitService = dailyEntryLimitService
     self.fileManager = fileManager
+    title = Self.makeInitialTitle(from: draft.transcript)
     transcript = draft.transcript
     selectedDriftType = .reflection
     selectedMood = draft.suggestedMood
     selectedThemes = draft.suggestedThemes
     selectedCustomThemes = []
     tags = draft.tags
+    shouldShowPlaybackSection = draft.duration > 0
   }
 
   deinit {
@@ -79,6 +90,10 @@ final class ReviewEntryViewModel {
 
   var shouldShowPlaybackControls: Bool {
     isPlaybackAvailable
+  }
+
+  var shouldShowPlaybackLoadingState: Bool {
+    shouldShowPlaybackSection && (isPreparingPlayback || playbackIsAwaitingMetadata)
   }
 
   var playbackProgress: Double {
@@ -106,6 +121,22 @@ final class ReviewEntryViewModel {
     selectedDriftType = driftType
   }
 
+  func loadSpaces() async {
+    do {
+      availableSpaces = try await spaceRepository.fetchSpaces()
+    } catch {
+      errorMessage = "We could not load your Spaces."
+    }
+  }
+
+  func toggleSpace(_ space: DriftSpace) {
+    if selectedSpaceIds.contains(space.id) {
+      selectedSpaceIds.removeAll { $0 == space.id }
+    } else {
+      selectedSpaceIds.append(space.id)
+    }
+  }
+
   func toggleTheme(_ theme: JournalTheme) {
     if selectedThemes.contains(theme) {
       selectedThemes.removeAll { $0 == theme }
@@ -129,21 +160,29 @@ final class ReviewEntryViewModel {
 
   func loadPlayback() async {
     guard fileManager.fileExists(atPath: draft.audioURL.path) else {
+      shouldShowPlaybackSection = false
       isPlaybackAvailable = false
       return
     }
+
+    isPreparingPlayback = true
+    shouldShowPlaybackSection = true
+    defer { isPreparingPlayback = false }
 
     do {
       let metadata = try await audioPlaybackService.prepare(url: draft.audioURL)
       playbackDuration = metadata.duration
       playbackCurrentTime = 0
       isPlaybackAvailable = metadata.duration > 0
+      shouldShowPlaybackSection = isPlaybackAvailable
       playbackErrorMessage = nil
     } catch let error as AudioPlaybackError {
       isPlaybackAvailable = false
+      shouldShowPlaybackSection = true
       playbackErrorMessage = error.localizedDescription
     } catch {
       isPlaybackAvailable = false
+      shouldShowPlaybackSection = true
       playbackErrorMessage = "We could not prepare this recording for playback."
     }
   }
@@ -285,7 +324,7 @@ final class ReviewEntryViewModel {
       createdAt: draft.createdAt,
       updatedAt: Date(),
       transcript: cleanedTranscript,
-      title: makeTitle(from: cleanedTranscript),
+      title: title.trimmedNonEmpty ?? makeTitle(from: cleanedTranscript),
       mood: selectedMood,
       moodConfidence: 0.68,
       themes: selectedThemes,
@@ -295,6 +334,7 @@ final class ReviewEntryViewModel {
       source: .voice,
       imageAttachments: imageAttachments,
       driftType: selectedDriftType,
+      spaceIds: selectedSpaceIds,
       aiVisibility: .privateLocalOnly,
       driftStatus: .active
     )
@@ -324,6 +364,17 @@ final class ReviewEntryViewModel {
     return String(firstSentence.prefix(48))
   }
 
+  private static func makeInitialTitle(from transcript: String) -> String {
+    let firstSentence =
+      transcript
+      .components(separatedBy: CharacterSet(charactersIn: ".!?"))
+      .first?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard let firstSentence, !firstSentence.isEmpty else { return "" }
+    return String(firstSentence.prefix(48))
+  }
+
   private func startPlaybackTimer() {
     playbackTimerTask?.cancel()
     playbackTimerTask = Task { [weak self] in
@@ -349,6 +400,10 @@ final class ReviewEntryViewModel {
   private func stopPlaybackTimer() {
     playbackTimerTask?.cancel()
     playbackTimerTask = nil
+  }
+
+  private var playbackIsAwaitingMetadata: Bool {
+    !isPlaybackAvailable && playbackErrorMessage == nil
   }
 
   private func cleanupTemporaryAudio() async {

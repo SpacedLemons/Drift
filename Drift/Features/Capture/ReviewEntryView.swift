@@ -38,6 +38,25 @@ struct ReviewEntryView: View {
           playbackSection
 
           VStack(alignment: .leading, spacing: AppSpacing.s) {
+            Text("Title")
+              .font(AppTypography.cardTitle)
+              .foregroundStyle(AppColors.textPrimary)
+
+            TextField("New Drift", text: $bindableViewModel.title)
+              .font(AppTypography.body)
+              .foregroundStyle(AppColors.textPrimary)
+              .padding(AppSpacing.s)
+              .background(
+                AppColors.surface.opacity(0.82),
+                in: RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
+              )
+              .overlay {
+                RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
+                  .stroke(AppColors.border, lineWidth: 1)
+              }
+          }
+
+          VStack(alignment: .leading, spacing: AppSpacing.s) {
             Text("Transcript")
               .font(AppTypography.cardTitle)
               .foregroundStyle(AppColors.textPrimary)
@@ -78,6 +97,8 @@ struct ReviewEntryView: View {
 
             MoodPicker(selection: $bindableViewModel.selectedMood)
           }
+
+          spaceSelector
 
           VStack(alignment: .leading, spacing: AppSpacing.s) {
             Text("Themes")
@@ -127,10 +148,10 @@ struct ReviewEntryView: View {
             Button(
               role: .destructive,
               action: {
-                isShowingDiscardConfirmation = true
+                requestDiscard()
               },
               label: {
-                Text("Discard")
+                Label("Discard", systemImage: AppIcons.xmark)
               }
             )
             .buttonStyle(.bordered)
@@ -164,6 +185,11 @@ struct ReviewEntryView: View {
       }
     }
     .navigationBarBackButtonHidden()
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        discardToolbarButton
+      }
+    }
     .confirmationDialog(
       "Discard this Drift?",
       isPresented: $isShowingDiscardConfirmation,
@@ -193,6 +219,7 @@ struct ReviewEntryView: View {
       Text("This unsaved Drift will be removed from this device.")
     }
     .task {
+      await viewModel.loadSpaces()
       await viewModel.loadCustomThemes()
       await viewModel.loadPlayback()
     }
@@ -211,9 +238,131 @@ struct ReviewEntryView: View {
   }
 
   @ViewBuilder
+  private var discardToolbarButton: some View {
+    if #available(iOS 26.0, *) {
+      Button(
+        action: requestDiscard,
+        label: {
+          discardToolbarIcon
+        }
+      )
+      .buttonStyle(.plain)
+      .disabled(viewModel.isSaving)
+      .glassEffect(
+        .regular.tint(AppColors.surface.opacity(0.44)).interactive(),
+        in: .rect(cornerRadius: 17)
+      )
+      .accessibilityLabel("Discard Drift")
+    } else {
+      Button(
+        action: requestDiscard,
+        label: {
+          discardToolbarIcon
+            .background(AppColors.surfaceRaised.opacity(0.86), in: Circle())
+            .overlay {
+              Circle()
+                .stroke(AppColors.border, lineWidth: 1)
+            }
+        }
+      )
+      .buttonStyle(.plain)
+      .disabled(viewModel.isSaving)
+      .accessibilityLabel("Discard Drift")
+    }
+  }
+
+  private var discardToolbarIcon: some View {
+    Image(systemName: AppIcons.xmark)
+      .font(.system(size: 14, weight: .semibold))
+      .foregroundStyle(AppColors.textPrimary)
+      .frame(width: 34, height: 34)
+  }
+
+  private func requestDiscard() {
+    isShowingDiscardConfirmation = true
+  }
+
+  @ViewBuilder
+  private var spaceSelector: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.s) {
+      Text("Spaces")
+        .font(AppTypography.cardTitle)
+        .foregroundStyle(AppColors.textPrimary)
+
+      if viewModel.availableSpaces.isEmpty {
+        Text("Save this Drift now, or add it to a Space later.")
+          .font(AppTypography.caption)
+          .foregroundStyle(AppColors.textTertiary)
+      } else {
+        FlowLayout(spacing: AppSpacing.xs) {
+          ForEach(viewModel.availableSpaces) { space in
+            Button {
+              viewModel.toggleSpace(space)
+            } label: {
+              Label(space.name, systemImage: space.icon)
+                .font(AppTypography.caption)
+                .foregroundStyle(
+                  viewModel.selectedSpaceIds.contains(space.id)
+                    ? AppColors.textPrimary : AppColors.textSecondary
+                )
+                .padding(.horizontal, AppSpacing.s)
+                .padding(.vertical, AppSpacing.xs)
+                .background(
+                  viewModel.selectedSpaceIds.contains(space.id)
+                    ? AppColors.accent.opacity(0.22) : AppColors.surfaceRaised,
+                  in: Capsule()
+                )
+                .overlay {
+                  Capsule()
+                    .stroke(
+                      viewModel.selectedSpaceIds.contains(space.id)
+                        ? AppColors.accent : AppColors.border,
+                      lineWidth: 1
+                    )
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(space.name)
+            .accessibilityAddTraits(
+              viewModel.selectedSpaceIds.contains(space.id) ? .isSelected : []
+            )
+          }
+        }
+      }
+    }
+  }
+
+  @ViewBuilder
   private var playbackSection: some View {
-    if viewModel.shouldShowPlaybackControls {
-      VStack(alignment: .leading, spacing: AppSpacing.s) {
+    if viewModel.shouldShowPlaybackSection {
+      ZStack(alignment: .leading) {
+        if viewModel.shouldShowPlaybackLoadingState {
+          AudioPlaybackLoadingView()
+            .transition(.opacity)
+        } else {
+          playbackControls
+            .transition(.opacity)
+        }
+      }
+      .frame(maxWidth: .infinity, minHeight: 104, alignment: .leading)
+      .padding(AppSpacing.m)
+      .background(
+        AppColors.surface.opacity(0.84),
+        in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
+      )
+      .overlay {
+        RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
+          .stroke(AppColors.border, lineWidth: 1)
+      }
+      .animation(AppAnimation.gentle, value: viewModel.isPreparingPlayback)
+      .animation(AppAnimation.gentle, value: viewModel.shouldShowPlaybackLoadingState)
+      .animation(AppAnimation.gentle, value: viewModel.shouldShowPlaybackControls)
+    }
+  }
+
+  private var playbackControls: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.s) {
+      if viewModel.shouldShowPlaybackControls {
         HStack(spacing: AppSpacing.s) {
           Button(
             action: {
@@ -243,21 +392,13 @@ struct ReviewEntryView: View {
           .font(AppTypography.caption)
           .foregroundStyle(AppColors.textTertiary)
           .fixedSize(horizontal: false, vertical: true)
-
-        if let playbackErrorMessage = viewModel.playbackErrorMessage {
-          Text(playbackErrorMessage)
-            .font(AppTypography.caption)
-            .foregroundStyle(AppColors.warmAccent)
-        }
       }
-      .padding(AppSpacing.m)
-      .background(
-        AppColors.surface.opacity(0.84),
-        in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
-      )
-      .overlay {
-        RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
-          .stroke(AppColors.border, lineWidth: 1)
+
+      if let playbackErrorMessage = viewModel.playbackErrorMessage {
+        Label(playbackErrorMessage, systemImage: AppIcons.warning)
+          .font(AppTypography.caption)
+          .foregroundStyle(AppColors.warmAccent)
+          .fixedSize(horizontal: false, vertical: true)
       }
     }
   }
@@ -311,6 +452,100 @@ struct ReviewEntryView: View {
         )
       }
     }
+  }
+}
+
+private struct AudioPlaybackLoadingView: View {
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var shimmerPhase: CGFloat = -1.1
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.s) {
+      HStack(spacing: AppSpacing.s) {
+        ShimmerPlaceholder(
+          width: 86,
+          height: 34,
+          cornerRadius: AppTheme.controlCornerRadius,
+          phase: shimmerPhase
+        )
+
+        ShimmerPlaceholder(
+          width: 92,
+          height: 14,
+          cornerRadius: 7,
+          phase: shimmerPhase
+        )
+
+        Spacer()
+      }
+
+      ShimmerPlaceholder(
+        height: 4,
+        cornerRadius: 2,
+        phase: shimmerPhase
+      )
+
+      ShimmerPlaceholder(
+        width: 252,
+        height: 13,
+        cornerRadius: 7,
+        phase: shimmerPhase
+      )
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("Preparing audio playback")
+    .onAppear {
+      guard !reduceMotion else {
+        shimmerPhase = 0
+        return
+      }
+
+      shimmerPhase = -1.1
+      withAnimation(.linear(duration: 1.35).repeatForever(autoreverses: false)) {
+        shimmerPhase = 1.8
+      }
+    }
+  }
+}
+
+private struct ShimmerPlaceholder: View {
+  let width: CGFloat?
+  let height: CGFloat
+  let cornerRadius: CGFloat
+  let phase: CGFloat
+
+  init(
+    width: CGFloat? = nil,
+    height: CGFloat,
+    cornerRadius: CGFloat,
+    phase: CGFloat
+  ) {
+    self.width = width
+    self.height = height
+    self.cornerRadius = cornerRadius
+    self.phase = phase
+  }
+
+  var body: some View {
+    RoundedRectangle(cornerRadius: cornerRadius)
+      .fill(AppColors.surfaceRaised.opacity(0.78))
+      .frame(width: width, height: height)
+      .overlay {
+        GeometryReader { proxy in
+          LinearGradient(
+            colors: [
+              .clear,
+              AppColors.textPrimary.opacity(0.14),
+              .clear,
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+          .frame(width: proxy.size.width * 0.64)
+          .offset(x: proxy.size.width * phase)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+      }
   }
 }
 

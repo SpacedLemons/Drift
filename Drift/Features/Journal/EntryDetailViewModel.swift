@@ -163,6 +163,7 @@ final class EntryDetailViewModel {
       isFavorite: entry.isFavorite,
       imageAttachments: editedImageAttachments,
       driftType: editedDriftType,
+      spaceIds: entry.spaceIds,
       aiVisibility: entry.aiVisibility,
       driftStatus: entry.driftStatus
     )
@@ -220,6 +221,7 @@ final class EntryDetailViewModel {
       isFavorite: !entry.isFavorite,
       imageAttachments: entry.imageAttachments,
       driftType: entry.driftType,
+      spaceIds: entry.spaceIds,
       aiVisibility: entry.aiVisibility,
       driftStatus: entry.driftStatus
     )

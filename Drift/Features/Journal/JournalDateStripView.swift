@@ -7,6 +7,26 @@
 
 import SwiftUI
 
+struct CalendarDayState: Identifiable, Equatable {
+  let id: String
+  let date: Date?
+  let dayNumber: Int?
+  let hasEntries: Bool
+  let isSelected: Bool
+  let isToday: Bool
+
+  static func empty(id: String) -> CalendarDayState {
+    CalendarDayState(
+      id: id,
+      date: nil,
+      dayNumber: nil,
+      hasEntries: false,
+      isSelected: false,
+      isToday: false
+    )
+  }
+}
+
 struct CalendarStripView: View {
   let compactDays: [Date]
   let selectedDate: Date?
@@ -17,6 +37,7 @@ struct CalendarStripView: View {
   let toggleExpansion: () -> Void
   let selectDate: (Date?) -> Void
   let moveMonth: (Int) -> Void
+  let dateHasEntries: (Date) -> Bool
 
   @Namespace private var selectionNamespace
 
@@ -122,7 +143,7 @@ struct CalendarStripView: View {
           )
       }
 
-      VStack(spacing: AppSpacing.xs) {
+      VStack(spacing: AppSpacing.xxs) {
         Text(day, format: .dateTime.weekday(.narrow))
           .font(AppTypography.caption)
           .foregroundStyle(isSelected ? .white : AppColors.textTertiary)
@@ -130,6 +151,18 @@ struct CalendarStripView: View {
         Text(day, format: .dateTime.day())
           .font(.system(.headline, design: .rounded, weight: .semibold))
           .foregroundStyle(isSelected ? .white : AppColors.textPrimary)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
+      if dateHasEntries(day) {
+        VStack {
+          Spacer(minLength: 0)
+
+          Circle()
+            .fill(AppColors.accentSecondary)
+            .frame(width: 5, height: 5)
+        }
+        .padding(.bottom, AppSpacing.xs)
       }
     }
     .frame(width: 48, height: 60)

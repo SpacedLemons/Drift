@@ -59,4 +59,16 @@ struct DriftItem: Identifiable, Hashable, Codable, Sendable {
   }
 
   var transcript: String { body }
+
+  var displayTitle: String {
+    if let title = title?.trimmedNonEmpty {
+      return title
+    }
+
+    return body.firstNonEmptyLine ?? "\(type.displayName) Drift"
+  }
+
+  var previewText: String {
+    body.trimmedNonEmpty ?? "No Drift body yet"
+  }
 }

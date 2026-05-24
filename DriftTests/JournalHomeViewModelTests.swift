@@ -20,14 +20,11 @@ struct JournalHomeViewModelTests {
       .fetchEntries()
       .willReturn(PreviewData.journalEntries)
 
-    let viewModel = JournalHomeViewModel(
-      journalRepository: repository,
-      now: { PreviewData.baseDate }
-    )
+    let viewModel = JournalHomeViewModel(journalRepository: repository)
 
     await viewModel.load()
 
-    #expect(viewModel.visibleEntries.count == PreviewData.journalEntries.count)
+    #expect(viewModel.visibleEntries == PreviewData.journalEntries)
     #expect(!viewModel.shouldShowFirstRunIntro)
     verify(repository)
       .fetchEntries()
@@ -51,246 +48,92 @@ struct JournalHomeViewModelTests {
   }
 
   @Test
-  func searchFiltersEntriesLocally() async throws {
-    let repository = MockJournalRepository()
-    given(repository)
-      .fetchEntries()
-      .willReturn(PreviewData.journalEntries)
-
+  func captureShowsEntriesAcrossDates() async throws {
     let viewModel = JournalHomeViewModel(
-      journalRepository: repository,
-      now: { PreviewData.baseDate }
+      journalRepository: PreviewJournalRepository(entries: PreviewData.journalEntries)
     )
 
     await viewModel.load()
-    viewModel.applySearchQuery("stressed")
-
-    #expect(viewModel.visibleEntries.count == 1)
-    #expect(viewModel.visibleEntries.first?.mood == .stressed)
-  }
-
-  @Test
-  func searchIsCaseInsensitive() async throws {
-    let repository = MockJournalRepository()
-    given(repository)
-      .fetchEntries()
-      .willReturn(PreviewData.journalEntries)
-
-    let viewModel = JournalHomeViewModel(
-      journalRepository: repository,
-      now: { PreviewData.baseDate }
-    )
-
-    await viewModel.load()
-    viewModel.applySearchQuery("STRESSED")
-
-    #expect(viewModel.visibleEntries.count == 1)
-    #expect(viewModel.visibleEntries.first?.mood == .stressed)
-  }
-
-  @Test
-  func searchTrimsWhitespace() async throws {
-    let repository = MockJournalRepository()
-    given(repository)
-      .fetchEntries()
-      .willReturn(PreviewData.journalEntries)
-
-    let viewModel = JournalHomeViewModel(
-      journalRepository: repository,
-      now: { PreviewData.baseDate }
-    )
-
-    await viewModel.load()
-    viewModel.applySearchQuery("  stressed  ")
-
-    #expect(viewModel.visibleEntries.count == 1)
-    #expect(viewModel.visibleEntries.first?.mood == .stressed)
-  }
-
-  @Test
-  func clearingSearchRestoresVisibleEntries() async throws {
-    let repository = MockJournalRepository()
-    given(repository)
-      .fetchEntries()
-      .willReturn(PreviewData.journalEntries)
-
-    let viewModel = JournalHomeViewModel(
-      journalRepository: repository,
-      now: { PreviewData.baseDate }
-    )
-
-    await viewModel.load()
-    viewModel.applySearchQuery("stressed")
-    viewModel.applySearchQuery("")
 
     #expect(viewModel.visibleEntries.count == PreviewData.journalEntries.count)
   }
 
   @Test
+  func captureUsesProductQuickDriftTypeFilters() {
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [])
+    )
+
+    #expect(
+      viewModel.driftTypeFilters == [
+        .thought,
+        .goal,
+        .idea,
+        .reflection,
+        .memory,
+      ])
+  }
+
+  @Test
   func reloadReflectsRepositoryChanges() async throws {
     let repository = PreviewJournalRepository(entries: [PreviewData.journalEntries[0]])
-    let viewModel = JournalHomeViewModel(
-      journalRepository: repository,
-      now: { PreviewData.baseDate }
-    )
+    let viewModel = JournalHomeViewModel(journalRepository: repository)
 
     await viewModel.load()
     #expect(viewModel.visibleEntries.count == 1)
 
-    try await repository.saveEntry(PreviewData.journalEntries[1])
+    try await repository.saveEntry(
+      JournalEntry(
+        id: fixtureUUID("A1000000-0000-0000-0000-000000000099"),
+        createdAt: PreviewData.baseDate.addingTimeInterval(-60),
+        transcript: "Another same-day Drift."
+      )
+    )
     await viewModel.load()
 
     #expect(viewModel.visibleEntries.count == 2)
   }
 
   @Test
-  func calendarStartsCollapsedOnCurrentMonth() async throws {
-    let calendar = calendarForTests()
-    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(entries: []),
-      calendar: calendar,
-      now: { now }
-    )
-
-    #expect(!viewModel.isCalendarExpanded)
-    #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2026)
-    #expect(calendar.component(.month, from: viewModel.selectedMonth) == 5)
-    #expect(calendar.component(.day, from: viewModel.selectedMonth) == 1)
-  }
-
-  @Test
-  func toggleCalendarExpansionChangesState() async throws {
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(entries: []),
-      now: { PreviewData.baseDate }
-    )
-
-    viewModel.toggleCalendarExpansion()
-
-    #expect(viewModel.isCalendarExpanded)
-
-    viewModel.toggleCalendarExpansion()
-
-    #expect(!viewModel.isCalendarExpanded)
-  }
-
-  @Test
-  func monthNavigationChangesSelectedMonth() async throws {
-    let calendar = calendarForTests()
-    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(entries: []),
-      calendar: calendar,
-      now: { now }
-    )
-
-    viewModel.moveSelectedMonth(by: -12)
-
-    #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2025)
-    #expect(calendar.component(.month, from: viewModel.selectedMonth) == 5)
-
-    viewModel.moveSelectedMonth(by: 13)
-
-    #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2026)
-    #expect(calendar.component(.month, from: viewModel.selectedMonth) == 6)
-  }
-
-  @Test
-  func calendarDaysMarkDatesWithEntries() async throws {
-    let calendar = calendarForTests()
-    let entryDate = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(
-        entries: [journalEntry(on: entryDate, title: "Marked")]
+  func driftTypeFilterNarrowsVisibleEntries() async throws {
+    let entries = [
+      JournalEntry(
+        id: fixtureUUID("A1000000-0000-0000-0000-000000000001"),
+        createdAt: PreviewData.baseDate,
+        transcript: "Goal",
+        driftType: .goal
       ),
-      calendar: calendar,
-      now: { entryDate }
-    )
-
-    await viewModel.load()
-
-    let markedDay = try #require(viewModel.calendarDays.first { $0.dayNumber == 13 })
-    let unmarkedDay = try #require(viewModel.calendarDays.first { $0.dayNumber == 14 })
-
-    #expect(markedDay.hasEntries)
-    #expect(!unmarkedDay.hasEntries)
-  }
-
-  @Test
-  func calendarWeekdaysRotateFromFirstDayOfMonth() async throws {
-    let calendar = calendarForTests()
-    let now = fixtureDate(calendar: calendar, year: 2026, month: 7, day: 13)
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(entries: []),
-      calendar: calendar,
-      now: { now }
-    )
-
-    #expect(viewModel.weekdaySymbols == ["W", "T", "F", "S", "S", "M", "T"])
-
-    viewModel.moveSelectedMonth(by: 1)
-
-    #expect(viewModel.weekdaySymbols == ["S", "S", "M", "T", "W", "T", "F"])
-  }
-
-  @Test
-  func calendarDaysStartWithFirstDayOfMonth() async throws {
-    let calendar = calendarForTests()
-    let now = fixtureDate(calendar: calendar, year: 2026, month: 7, day: 13)
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(entries: []),
-      calendar: calendar,
-      now: { now }
-    )
-
-    #expect(viewModel.calendarDays.first?.dayNumber == 1)
-    #expect(
-      Array(viewModel.calendarDays.prefix(7).compactMap(\.dayNumber)) == [1, 2, 3, 4, 5, 6, 7])
-  }
-
-  @Test
-  func selectDateFiltersEntriesAndMovesSelectedMonth() async throws {
-    let calendar = calendarForTests()
-    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
-    let selectedDate = fixtureDate(calendar: calendar, year: 2025, month: 2, day: 4)
-    let matchingEntry = journalEntry(on: selectedDate, title: "Old entry")
-    let hiddenEntry = journalEntry(
-      on: fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13),
-      title: "Today"
-    )
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(entries: [matchingEntry, hiddenEntry]),
-      calendar: calendar,
-      now: { now }
-    )
-
-    await viewModel.load()
-    viewModel.selectDate(selectedDate)
-
-    #expect(viewModel.visibleEntries == [matchingEntry])
-    #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2025)
-    #expect(calendar.component(.month, from: viewModel.selectedMonth) == 2)
-  }
-
-  @Test
-  func selectedDateHasNoEntriesWorksForEmptyDay() async throws {
-    let calendar = calendarForTests()
-    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 13)
-    let emptyDate = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 14)
-    let viewModel = JournalHomeViewModel(
-      journalRepository: PreviewJournalRepository(
-        entries: [journalEntry(on: now, title: "Today")]
+      JournalEntry(
+        id: fixtureUUID("A1000000-0000-0000-0000-000000000002"),
+        createdAt: PreviewData.baseDate.addingTimeInterval(-60),
+        transcript: "Idea",
+        driftType: .idea
       ),
-      calendar: calendar,
-      now: { now }
+    ]
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: entries)
     )
 
     await viewModel.load()
-    viewModel.selectDate(emptyDate)
+    viewModel.selectDriftTypeFilter(.goal)
 
-    #expect(viewModel.visibleEntries.isEmpty)
-    #expect(viewModel.selectedDateHasNoEntries)
+    #expect(viewModel.visibleEntries.map(\.driftType) == [.goal])
+
+    viewModel.selectDriftTypeFilter(nil)
+
+    #expect(viewModel.visibleEntries.count == 2)
+  }
+
+  @Test
+  func entryReturnsLoadedEntry() async throws {
+    let entry = PreviewData.journalEntries[0]
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [entry])
+    )
+
+    await viewModel.load()
+
+    #expect(viewModel.entry(id: entry.id) == entry)
   }
 
   @Test
@@ -326,24 +169,4 @@ struct JournalHomeViewModelTests {
 
 private enum TestJournalHomeRepositoryError: Error {
   case failed
-}
-
-private func calendarForTests() -> Calendar {
-  var calendar = Calendar(identifier: .gregorian)
-  calendar.locale = Locale(identifier: "en_US_POSIX")
-  calendar.timeZone = fixtureTimeZone(secondsFromGMT: 0)
-  calendar.firstWeekday = 2
-  return calendar
-}
-
-private func journalEntry(on date: Date, title: String) -> JournalEntry {
-  JournalEntry(
-    id: UUID(),
-    createdAt: date,
-    transcript: title,
-    title: title,
-    mood: .neutral,
-    themes: [],
-    tags: []
-  )
 }

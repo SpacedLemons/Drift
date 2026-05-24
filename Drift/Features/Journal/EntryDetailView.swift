@@ -49,7 +49,7 @@ struct EntryDetailView: View {
             Image(systemName: AppIcons.back)
           }
         )
-        .accessibilityLabel("Back to Timeline")
+        .accessibilityLabel("Back")
       }
 
       ToolbarItemGroup(placement: .topBarTrailing) {
@@ -191,7 +191,9 @@ struct EntryDetailView: View {
 
   private func detailMeta(_ entry: JournalEntry) -> some View {
     FlowLayout(spacing: AppSpacing.xs) {
-      MoodPill(mood: entry.mood)
+      if let mood = entry.mood {
+        MoodPill(mood: mood)
+      }
 
       Label(entry.driftType.displayName, systemImage: entry.driftType.symbolName)
         .font(AppTypography.caption)

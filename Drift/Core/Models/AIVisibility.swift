@@ -15,8 +15,8 @@ enum AIVisibility: String, CaseIterable, Identifiable, Codable, Hashable, Sendab
   var displayName: String {
     switch self {
     case .privateLocalOnly: "Private local only"
-    case .availableForInAppAI: "Available for in-app AI"
-    case .availableForChatGPT: "Available for ChatGPT export"
+    case .availableForInAppAI: "Prepared for future in-app AI"
+    case .availableForChatGPT: "Manual ChatGPT export"
     }
   }
 

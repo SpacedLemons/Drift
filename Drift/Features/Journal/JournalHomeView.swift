@@ -35,24 +35,7 @@ struct JournalHomeView: View {
         VStack(alignment: .leading, spacing: AppSpacing.l) {
           header
 
-          SearchBar(
-            text: Binding(
-              get: { viewModel.searchQuery },
-              set: viewModel.applySearchQuery
-            )
-          )
-
-          CalendarStripView(
-            compactDays: viewModel.dateStripDays,
-            selectedDate: viewModel.selectedDate,
-            selectedMonthTitle: viewModel.selectedMonthTitle,
-            weekdaySymbols: viewModel.weekdaySymbols,
-            calendarDays: viewModel.calendarDays,
-            isExpanded: viewModel.isCalendarExpanded,
-            toggleExpansion: viewModel.toggleCalendarExpansion,
-            selectDate: viewModel.selectDate,
-            moveMonth: viewModel.moveSelectedMonth
-          )
+          filterPills
 
           if viewModel.shouldShowFirstRunIntro {
             firstRunIntroCard
@@ -93,11 +76,63 @@ struct JournalHomeView: View {
           .accessibilityLabel("Private local Drifts")
       }
 
-      Text("Let your thoughts Drift. Your Drifts are stored on this device.")
+      Text("Let your thoughts Drift")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
         .fixedSize(horizontal: false, vertical: true)
     }
+  }
+
+  private var filterPills: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.s) {
+      Text("Filter Drifts")
+        .font(AppTypography.caption)
+        .foregroundStyle(AppColors.textSecondary)
+
+      ScrollView(.horizontal, showsIndicators: false) {
+        HStack(spacing: AppSpacing.xs) {
+          filterButton(title: "All", icon: AppIcons.waveform, driftType: nil)
+
+          ForEach(viewModel.driftTypeFilters) { driftType in
+            filterButton(
+              title: driftType.displayName,
+              icon: driftType.symbolName,
+              driftType: driftType
+            )
+          }
+        }
+      }
+    }
+  }
+
+  private func filterButton(
+    title: String,
+    icon: String,
+    driftType: DriftType?
+  ) -> some View {
+    let isSelected = viewModel.selectedDriftTypeFilter == driftType
+
+    return Button {
+      withAnimation(AppAnimation.gentle) {
+        viewModel.selectDriftTypeFilter(driftType)
+      }
+    } label: {
+      Label(title, systemImage: icon)
+        .font(AppTypography.caption)
+        .foregroundStyle(isSelected ? AppColors.textPrimary : AppColors.textSecondary)
+        .padding(.horizontal, AppSpacing.s)
+        .padding(.vertical, AppSpacing.xs)
+        .background(
+          isSelected ? AppColors.accent.opacity(0.22) : AppColors.surfaceRaised,
+          in: Capsule()
+        )
+        .overlay {
+          Capsule()
+            .stroke(isSelected ? AppColors.accent : AppColors.border, lineWidth: 1)
+        }
+    }
+    .buttonStyle(.plain)
+    .accessibilityAddTraits(isSelected ? .isSelected : [])
   }
 
   @ViewBuilder
@@ -119,7 +154,11 @@ struct JournalHomeView: View {
         icon: AppIcons.mic
       )
     } else {
-      VStack(spacing: AppSpacing.m) {
+      VStack(alignment: .leading, spacing: AppSpacing.m) {
+        Text("Recent Drifts")
+          .font(AppTypography.cardTitle)
+          .foregroundStyle(AppColors.textPrimary)
+
         ForEach(viewModel.visibleEntries) { entry in
           Button(
             action: {
@@ -140,10 +179,6 @@ struct JournalHomeView: View {
       return "No Drifts yet."
     }
 
-    if viewModel.selectedDateHasNoEntries {
-      return "No Drifts for this date."
-    }
-
     return "No matching Drifts."
   }
 
@@ -152,11 +187,7 @@ struct JournalHomeView: View {
       return "Tap the microphone when you are ready to capture a thought."
     }
 
-    if viewModel.selectedDateHasNoEntries {
-      return "Choose another date or tap the microphone when you are ready."
-    }
-
-    return "Try another word or phrase."
+    return "Try another Drift Type."
   }
 
   private var firstRunIntroCard: some View {

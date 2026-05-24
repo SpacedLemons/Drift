@@ -26,6 +26,7 @@ enum DriftItemToJournalEntryMapper {
       isFavorite: existingEntry?.isFavorite ?? false,
       imageAttachments: drift.attachments,
       driftType: drift.type,
+      spaceIds: drift.spaces,
       aiVisibility: drift.aiVisibility,
       driftStatus: drift.status
     )

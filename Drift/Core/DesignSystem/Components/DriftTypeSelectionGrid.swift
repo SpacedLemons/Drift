@@ -12,7 +12,7 @@ struct DriftTypeSelectionGrid: View {
 
   var body: some View {
     FlowLayout(spacing: AppSpacing.xs) {
-      ForEach(DriftType.allCases) { driftType in
+      ForEach(DriftType.reviewSelectionOrder) { driftType in
         Button {
           selection = driftType
         } label: {

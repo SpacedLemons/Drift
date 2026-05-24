@@ -25,6 +25,7 @@ enum JournalEntryMapper {
       sourceRawValue: entry.source.rawValue,
       isFavorite: entry.isFavorite,
       driftTypeRawValue: entry.driftType.rawValue,
+      spaceIdsData: try encode(entry.spaceIds),
       aiVisibilityRawValue: entry.aiVisibility.rawValue,
       driftStatusRawValue: entry.driftStatus.rawValue
     )
@@ -45,6 +46,7 @@ enum JournalEntryMapper {
     entity.sourceRawValue = entry.source.rawValue
     entity.isFavorite = entry.isFavorite
     entity.driftTypeRawValue = entry.driftType.rawValue
+    entity.spaceIdsData = try encode(entry.spaceIds)
     entity.aiVisibilityRawValue = entry.aiVisibility.rawValue
     entity.driftStatusRawValue = entry.driftStatus.rawValue
   }
@@ -69,6 +71,7 @@ enum JournalEntryMapper {
       isFavorite: entity.isFavorite,
       imageAttachments: decode([JournalImageAttachment].self, from: entity.imageAttachmentsData),
       driftType: driftType(from: entity.driftTypeRawValue),
+      spaceIds: decode([UUID].self, from: entity.spaceIdsData),
       aiVisibility: aiVisibility(from: entity.aiVisibilityRawValue),
       driftStatus: driftStatus(from: entity.driftStatusRawValue)
     )
@@ -88,6 +91,11 @@ enum JournalEntryMapper {
 
   private static func decode<Value: Decodable>(_ type: [Value].Type, from data: Data) -> [Value] {
     (try? JSONDecoder().decode(type, from: data)) ?? []
+  }
+
+  private static func decode<Value: Decodable>(_ type: [Value].Type, from data: Data?) -> [Value] {
+    guard let data else { return [] }
+    return decode(type, from: data)
   }
 
   private static func mood(from rawValue: String?) -> Mood? {

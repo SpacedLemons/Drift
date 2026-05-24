@@ -95,6 +95,30 @@ struct ReviewEntryViewModelTests {
   }
 
   @Test
+  func savesSelectedSpaces() async throws {
+    let repository = PreviewJournalRepository(entries: [])
+    let space = DriftSpace(
+      id: fixtureUUID("B1000000-0000-0000-0000-000000000001"),
+      name: "Goals",
+      description: "Goal Drifts",
+      icon: "target"
+    )
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: repository,
+      spaceRepository: LocalSpaceRepository(spaces: [space])
+    )
+
+    await viewModel.loadSpaces()
+    viewModel.toggleSpace(space)
+    let entry = await viewModel.save()
+    let savedEntry = try await repository.fetchEntry(id: makeDraft().id)
+
+    #expect(entry?.spaceIds == [space.id])
+    #expect(savedEntry?.spaceIds == [space.id])
+  }
+
+  @Test
   func addImageInputsSavesAttachmentMetadataOnEntry() async throws {
     let repository = PreviewJournalRepository(entries: [])
     let viewModel = ReviewEntryViewModel(
@@ -149,6 +173,66 @@ struct ReviewEntryViewModelTests {
 
     await viewModel.togglePlayback()
     #expect(!viewModel.isPlayingAudio)
+  }
+
+  @Test
+  func playbackSectionStaysReservedWhileTemporaryRecordingPrepares() async throws {
+    let audioURL = try makeTemporaryAudioFile()
+    defer { try? FileManager.default.removeItem(at: audioURL) }
+    let audioPlaybackService = DelayedAudioPlaybackService(duration: 42)
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(audioURL: audioURL),
+      journalRepository: PreviewJournalRepository(entries: []),
+      audioPlaybackService: audioPlaybackService
+    )
+
+    #expect(viewModel.shouldShowPlaybackSection)
+    #expect(!viewModel.isPreparingPlayback)
+    #expect(viewModel.shouldShowPlaybackLoadingState)
+    #expect(!viewModel.shouldShowPlaybackControls)
+
+    let loadTask = Task {
+      await viewModel.loadPlayback()
+    }
+
+    while !audioPlaybackService.hasStartedPrepare {
+      await Task.yield()
+    }
+
+    #expect(viewModel.shouldShowPlaybackSection)
+    #expect(viewModel.isPreparingPlayback)
+    #expect(viewModel.shouldShowPlaybackLoadingState)
+    #expect(!viewModel.shouldShowPlaybackControls)
+
+    audioPlaybackService.finishPrepare()
+    await loadTask.value
+
+    #expect(viewModel.shouldShowPlaybackSection)
+    #expect(!viewModel.isPreparingPlayback)
+    #expect(!viewModel.shouldShowPlaybackLoadingState)
+    #expect(viewModel.shouldShowPlaybackControls)
+    #expect(viewModel.playbackDuration == 42)
+  }
+
+  @Test
+  func playbackSectionHidesWhenTemporaryRecordingIsMissing() async throws {
+    let missingAudioURL = FileManager.default.temporaryDirectory
+      .appendingPathComponent("missing-drift-review-test-\(UUID().uuidString)")
+      .appendingPathExtension("m4a")
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(audioURL: missingAudioURL),
+      journalRepository: PreviewJournalRepository(entries: []),
+      audioPlaybackService: PreviewAudioPlaybackService(duration: 42)
+    )
+
+    #expect(viewModel.shouldShowPlaybackSection)
+
+    await viewModel.loadPlayback()
+
+    #expect(!viewModel.shouldShowPlaybackSection)
+    #expect(!viewModel.isPreparingPlayback)
+    #expect(!viewModel.shouldShowPlaybackLoadingState)
+    #expect(!viewModel.shouldShowPlaybackControls)
   }
 
   @Test
@@ -235,5 +319,54 @@ struct ReviewEntryViewModelTests {
       .appendingPathExtension("m4a")
     try Data("audio".utf8).write(to: url)
     return url
+  }
+}
+
+private final class DelayedAudioPlaybackService: AudioPlaybackService, @unchecked Sendable {
+  private let lock = NSLock()
+  private let duration: TimeInterval
+  private var prepareContinuation: CheckedContinuation<AudioPlaybackMetadata, Never>?
+  private var didStartPrepare = false
+
+  init(duration: TimeInterval) {
+    self.duration = duration
+  }
+
+  var hasStartedPrepare: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return didStartPrepare
+  }
+
+  func prepare(url: URL) async throws -> AudioPlaybackMetadata {
+    await withCheckedContinuation { continuation in
+      lock.lock()
+      didStartPrepare = true
+      prepareContinuation = continuation
+      lock.unlock()
+    }
+  }
+
+  func finishPrepare() {
+    lock.lock()
+    let continuation = prepareContinuation
+    prepareContinuation = nil
+    lock.unlock()
+
+    continuation?.resume(returning: AudioPlaybackMetadata(duration: duration))
+  }
+
+  func play() async throws {}
+
+  func pause() async {}
+
+  func stop() async {}
+
+  func currentTime() async -> TimeInterval {
+    0
+  }
+
+  func isPlaying() async -> Bool {
+    false
   }
 }

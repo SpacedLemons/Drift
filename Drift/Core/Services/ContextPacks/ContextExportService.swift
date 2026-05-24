@@ -40,34 +40,49 @@ struct LocalContextExportService: ContextExportService, Sendable {
     exportedAt: Date
   ) async throws -> String {
     var lines = [
-      "# \(contextPack.name)",
+      "# Context Pack: \(contextPack.name)",
       "",
-      contextPack.description,
+      contextPack.description.trimmedNonEmpty ?? "Curated context from Drift.",
       "",
       "Exported: \(dateTimeString(for: exportedAt))",
       "Visibility: \(contextPack.aiVisibility.displayName)",
       "",
-      "Drifts are private by default. You choose what to share with AI.",
+      "Drifts are private by default. You choose what to share.",
       "",
     ]
 
     if !spaces.isEmpty {
-      lines.append("## Spaces")
+      lines.append("## Spaces Included")
       lines.append("")
       for space in spaces {
-        lines.append("- \(space.name): \(space.description)")
+        lines.append("- \(space.name)")
       }
       lines.append("")
     }
 
-    lines.append("## Drifts")
-    lines.append("")
-
     if drifts.isEmpty {
+      lines.append("## Recent Drifts")
+      lines.append("")
       lines.append("No Drifts selected yet.")
     } else {
-      for drift in drifts.sorted(by: { $0.createdAt > $1.createdAt }) {
-        lines.append(contentsOf: markdownLines(for: drift))
+      let groupedDrifts = Dictionary(grouping: drifts, by: \.type)
+
+      for type in DriftType.allCases where groupedDrifts[type]?.isEmpty == false {
+        lines.append("## \(type.sectionTitle)")
+        lines.append("")
+
+        for drift in (groupedDrifts[type] ?? []).sorted(by: { $0.createdAt > $1.createdAt }) {
+          lines.append(contentsOf: markdownLines(for: drift))
+        }
+      }
+
+      lines.append("## Recent Drifts")
+      lines.append("")
+
+      for drift in drifts.sorted(by: { $0.createdAt > $1.createdAt }).prefix(8) {
+        lines.append(
+          "- \(drift.displayTitle): \(drift.previewText)"
+        )
       }
     }
 
@@ -75,21 +90,21 @@ struct LocalContextExportService: ContextExportService, Sendable {
   }
 
   private func markdownLines(for drift: DriftItem) -> [String] {
+    let body = drift.previewText
     var lines = [
-      "### \(drift.title?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty ?? drift.type.displayName)",
-      "Type: \(drift.type.displayName)",
-      "Date: \(dateTimeString(for: drift.createdAt))",
-      "Mood: \(drift.mood?.displayName ?? "Not set")",
-      "Tags: \(drift.tags.isEmpty ? "None" : drift.tags.joined(separator: ", "))",
-      "",
-      drift.body.trimmingCharacters(in: .whitespacesAndNewlines),
-      "",
+      "- \(drift.displayTitle)",
+      "  - Date: \(dateTimeString(for: drift.createdAt))",
+      "  - Type: \(drift.type.displayName)",
+      "  - Mood: \(drift.mood?.displayName ?? "Not set")",
+      "  - Tags: \(drift.tags.isEmpty ? "None" : drift.tags.joined(separator: ", "))",
+      "  - Body: \(body)",
     ]
 
     if !drift.attachments.isEmpty {
-      lines.insert("Attachments: \(drift.attachments.count) local image(s)", at: 5)
+      lines.insert("  - Attachments: \(drift.attachments.count) local image(s)", at: 5)
     }
 
+    lines.append("")
     return lines
   }
 
@@ -103,8 +118,19 @@ struct LocalContextExportService: ContextExportService, Sendable {
   }
 }
 
-extension String {
-  fileprivate var nonEmpty: String? {
-    isEmpty ? nil : self
+extension DriftType {
+  fileprivate var sectionTitle: String {
+    switch self {
+    case .thought: "Thoughts"
+    case .reflection: "Reflections"
+    case .goal: "Goals"
+    case .idea: "Ideas"
+    case .memory: "Memories"
+    case .mood: "Moods"
+    case .decision: "Decisions"
+    case .task: "Tasks"
+    case .visual: "Visuals"
+    case .context: "Context"
+    }
   }
 }

@@ -26,6 +26,10 @@ struct JournalEntryMapperTests {
       [JournalImageAttachment].self,
       from: entity.imageAttachmentsData
     )
+    let spaceIds = try JSONDecoder().decode(
+      [UUID].self,
+      from: try #require(entity.spaceIdsData)
+    )
 
     #expect(entity.id == entry.id)
     #expect(entity.createdAt == entry.createdAt)
@@ -42,6 +46,7 @@ struct JournalEntryMapperTests {
     #expect(entity.sourceRawValue == EntrySource.typed.rawValue)
     #expect(entity.isFavorite == true)
     #expect(entity.driftTypeRawValue == DriftType.task.rawValue)
+    #expect(spaceIds == entry.spaceIds)
     #expect(entity.aiVisibilityRawValue == AIVisibility.privateLocalOnly.rawValue)
     #expect(entity.driftStatusRawValue == DriftStatus.active.rawValue)
   }
@@ -65,6 +70,7 @@ struct JournalEntryMapperTests {
       sourceRawValue: EntrySource.typed.rawValue,
       isFavorite: entry.isFavorite,
       driftTypeRawValue: DriftType.task.rawValue,
+      spaceIds: entry.spaceIds,
       aiVisibilityRawValue: AIVisibility.privateLocalOnly.rawValue,
       driftStatusRawValue: DriftStatus.active.rawValue
     )
@@ -161,6 +167,7 @@ struct JournalEntryMapperTests {
     #expect(mappedEntry.duration == entry.duration)
     #expect(mappedEntry.isFavorite == entry.isFavorite)
     #expect(mappedEntry.driftType == entry.driftType)
+    #expect(mappedEntry.spaceIds == entry.spaceIds)
     #expect(mappedEntry.aiVisibility == entry.aiVisibility)
     #expect(mappedEntry.driftStatus == entry.driftStatus)
   }
@@ -200,6 +207,9 @@ private func makeEntry() -> JournalEntry {
       )
     ],
     driftType: .task,
+    spaceIds: [
+      fixtureUUID("C71E1D20-400C-4D3D-9A5B-555555555555")
+    ],
     aiVisibility: .privateLocalOnly,
     driftStatus: .active
   )
@@ -221,6 +231,7 @@ private func makeEntity(
   sourceRawValue: String = EntrySource.voice.rawValue,
   isFavorite: Bool = false,
   driftTypeRawValue: String? = DriftType.reflection.rawValue,
+  spaceIds: [UUID] = [],
   aiVisibilityRawValue: String? = AIVisibility.privateLocalOnly.rawValue,
   driftStatusRawValue: String? = DriftStatus.active.rawValue
 ) -> JournalEntryEntity {
@@ -240,6 +251,7 @@ private func makeEntity(
     sourceRawValue: sourceRawValue,
     isFavorite: isFavorite,
     driftTypeRawValue: driftTypeRawValue,
+    spaceIdsData: (try? JSONEncoder().encode(spaceIds)) ?? Data(),
     aiVisibilityRawValue: aiVisibilityRawValue,
     driftStatusRawValue: driftStatusRawValue
   )

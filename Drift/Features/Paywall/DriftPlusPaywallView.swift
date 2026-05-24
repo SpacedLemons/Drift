@@ -130,8 +130,8 @@ struct DriftPlusPaywallView: View {
         spacing: AppSpacing.s
       ) {
         PaywallBenefitPill(icon: AppIcons.waveform, title: "Enhanced transcription")
-        PaywallBenefitPill(icon: AppIcons.sparkles, title: "AI reflections")
-        PaywallBenefitPill(icon: AppIcons.question, title: "Ask your Drifts")
+        PaywallBenefitPill(icon: AppIcons.chartLine, title: "Deeper mood history")
+        PaywallBenefitPill(icon: "app.badge", title: "Custom app icons")
         PaywallBenefitPill(icon: AppIcons.paintPalette, title: "Theme builder")
         PaywallBenefitPill(icon: AppIcons.share, title: "Premium exports")
         PaywallBenefitPill(icon: AppIcons.lockShield, title: "Optional iCloud backup")

@@ -14,6 +14,7 @@ enum AppIcons {
   static let xmark = "xmark"
   static let pencil = "pencil"
   static let trash = "trash"
+  static let copy = "doc.on.doc"
   static let share = "square.and.arrow.up"
   static let search = "magnifyingglass"
   static let calendar = "calendar"

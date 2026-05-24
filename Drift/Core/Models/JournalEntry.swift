@@ -23,6 +23,7 @@ struct JournalEntry: Identifiable, Hashable, Codable, Sendable {
   var isFavorite: Bool
   var imageAttachments: [JournalImageAttachment]
   var driftType: DriftType
+  var spaceIds: [UUID]
   var aiVisibility: AIVisibility
   var driftStatus: DriftStatus
 
@@ -42,6 +43,7 @@ struct JournalEntry: Identifiable, Hashable, Codable, Sendable {
     isFavorite: Bool = false,
     imageAttachments: [JournalImageAttachment] = [],
     driftType: DriftType = .reflection,
+    spaceIds: [UUID] = [],
     aiVisibility: AIVisibility = .privateLocalOnly,
     driftStatus: DriftStatus = .active
   ) {
@@ -60,32 +62,20 @@ struct JournalEntry: Identifiable, Hashable, Codable, Sendable {
     self.isFavorite = isFavorite
     self.imageAttachments = imageAttachments
     self.driftType = driftType
+    self.spaceIds = spaceIds
     self.aiVisibility = aiVisibility
     self.driftStatus = driftStatus
   }
 
   var displayTitle: String {
-    if let title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+    if let title = title?.trimmedNonEmpty {
       return title
     }
 
-    return
-      transcript
-      .components(separatedBy: .newlines)
-      .first?
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-      .nonEmpty ?? "\(driftType.displayName) Drift"
+    return transcript.firstNonEmptyLine ?? "\(driftType.displayName) Drift"
   }
 
   var previewText: String {
-    transcript
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-      .nonEmpty ?? "No transcript yet"
-  }
-}
-
-extension String {
-  fileprivate var nonEmpty: String? {
-    isEmpty ? nil : self
+    transcript.trimmedNonEmpty ?? "No transcript yet"
   }
 }

@@ -1,443 +1,331 @@
-# Drift Product Reframe Goal
+Use this as the next Codex prompt:
 
-Follow the updated README/project brief.
+```markdown
+Follow the updated Drift product direction.
 
-We are beginning the product migration from:
+The app has now moved toward the Drift/Spaces/Timeline model. This prompt is focused on polishing the Capture/Home and Timeline calendar experience.
 
-    voice journal
-
-to:
-
-    voice-first personal context board for AI
-
-This goal is the first implementation step of the reframe.
-
+Do not add backend/networking.
+Do not add MCP.
+Do not add OpenAI.
+Do not add new paid features.
 Do not rebuild the whole app.
 
-Do not add MCP.
-Do not add ChatGPT integration.
-Do not add backend/networking.
-Do not add OpenAI.
-Do not remove existing journal data.
-Do not break the current MVP.
-
-The goal is to carefully introduce the new product architecture and terminology while keeping the app functional.
+Keep Drift local-first and private.
 
 ---
 
-# Core Direction
+# Verification Requirement
 
-Drift should become:
+After making changes:
 
-> A voice-first personal context board for AI.
+1. Build the project if practical.
+2. Run the relevant SwiftUI preview or simulator screen if practical.
+3. Take a screenshot of the simulator or SwiftUI preview.
+4. Include the screenshot path/location in the final summary.
+5. Show the important code changes made, especially new/updated files and key snippets.
+6. Summarise what was changed and how to manually test it.
 
-Slogan:
-
-> Let your thoughts Drift.
-
-A Drift can be:
-
-- thought
-- reflection
-- goal
-- idea
-- memory
-- mood
-- decision
-- task
-- visual
-- context
-
-The current journal entry should become a Reflection Drift.
+If a screenshot cannot be captured, explain why and still provide the key code changes.
 
 ---
 
-# Implementation Strategy
+# Goal
 
-Do this incrementally.
+Polish the Drift Capture/Home screen and Timeline calendar interactions so the app feels smooth, native, and intentional.
 
-Do not perform a massive unsafe rename across the entire project.
+Focus on:
 
-Prefer compatibility layers, type aliases, adapters, and staged migration.
-
-Existing app behaviour must continue to work.
-
-Existing persisted data must remain accessible.
-
----
-
-# Step 1: Add New Domain Models
-
-Add new domain models while keeping existing models working.
-
-Create:
-
-- DriftItem
-- DriftType
-- DriftSpace
-- ContextPack
-- AIVisibility
-- DriftSource
-- DriftStatus
-- DriftCaptureProposal
-- DriftAction
-
-If similar models already exist, extend or adapt them cleanly.
-
-Suggested models:
-
-    DriftItem
-    DriftType
-    DriftSpace
-    ContextPack
-    AIVisibility
-    DriftCaptureProposal
-
-Keep models Codable, Hashable, Identifiable where appropriate.
-
-Use stable raw values.
+1. Native inline navigation title behaviour for “Drift”
+2. Drift-styled global search on Capture/Home
+3. Better Drift type filtering
+4. Smooth calendar chevron animation
+5. Seamless month transition animation in Timeline/calendar
+6. General Capture/Home polish
 
 ---
 
-# DriftItem
+# 1. Native Inline / Large Title Behaviour
 
-A DriftItem should support:
+The Capture/Home screen should use standard SwiftUI navigation title behaviour.
 
-- id
-- createdAt
-- updatedAt
+Use the standard SwiftUI navigation title system so:
+
+- “Drift” appears as the large title when at the top
+- it collapses into the small inline title at the top when scrolling
+- behaviour feels native to iOS
+- avoid custom title hacks if the native navigation system can do this cleanly
+
+Use something like the standard navigation title approach rather than manually animating a fake title.
+
+Expected feel:
+
+- at top: large “Drift”
+- when scrolling: small inline “Drift” in navigation bar
+
+Keep the subtitle below the title area:
+
+    Let your thoughts Drift.
+
+The subtitle should remain part of the page content.
+
+---
+
+# 2. Capture/Home Search Bar
+
+Add a Drift-styled search bar underneath:
+
+    Let your thoughts Drift.
+
+The search bar should search across the user’s local Drifts.
+
+Search should include:
+
 - title
-- body/transcript
-- type
-- mood
+- body/description/transcript
 - tags
-- spaces
-- attachments
-- source
-- aiVisibility
-- status
-- linkedDriftIds
-- linkedGoalIds if useful
+- Drift Type
+- Space name if available
+- mood if useful
 
-Do not remove JournalEntry yet.
+Search ranking should be sensible:
 
-Map JournalEntry to DriftItem where practical.
+1. Strongest match: title
+2. Next: tags/spaces/type
+3. Then: body/description/transcript
 
-For now, existing journal entries can be represented as:
-
-    DriftType.reflection
-
----
-
-# DriftType
-
-Add types:
-
-- thought
-- reflection
-- goal
-- idea
-- memory
-- mood
-- decision
-- task
-- visual
-- context
-
-Use compact switch formatting for display names and symbols.
+This means title matches should rank higher than body-only matches.
 
 Example:
 
-    switch self {
-    case .thought: "Thought"
-    case .reflection: "Reflection"
-    case .goal: "Goal"
-    }
+If the query is “OpenAI”:
+
+- title containing “OpenAI” should appear above a Drift where OpenAI is only mentioned once in the body.
+
+Search should feel reasonably good without requiring backend/AI.
+
+Do not add semantic search yet.
+
+This should be local-only.
+
+No backend.
+
+No OpenAI.
+
+No MCP.
 
 ---
 
-# DriftSpace
+# Search UI Requirements
 
-Add a Space model.
+The search bar should match Drift’s style:
 
-A Space is a board/collection for Drifts.
+- dark rounded capsule/card
+- subtle border
+- SFSymbol `magnifyingglass`
+- placeholder copy such as:
 
-Fields should include:
+    Search your Drifts
 
-- id
-- name
-- description
-- icon
-- color/accent if supported
-- createdAt
-- updatedAt
-- isPinned
-- aiVisibility
+- clear button if text is entered
+- smooth animation when results update
+- no generic white iOS search field if it clashes with the Drift design
 
-Do not fully replace themes/categories yet.
-
-Instead, prepare a migration path where current custom themes can later become Spaces.
+If the app already has a reusable SearchBar component, update/reuse it.
 
 ---
 
-# ContextPack
+# Search Behaviour
 
-Add a ContextPack model.
+When search text is empty:
 
-A Context Pack is a curated group of Drifts/Spaces that can be copied/shared with AI.
+- show normal recent Drifts list
 
-Fields should include:
+When search text is non-empty:
 
-- id
-- name
-- description
-- driftIds
-- spaceIds
-- createdAt
-- updatedAt
-- aiVisibility
+- show matching Drifts
+- show a clear no-results state if nothing matches
 
-Do not add MCP.
+Suggested no-results copy:
 
-Do not add backend.
+    No matching Drifts.
+    Try another word or phrase.
 
-For now, Context Packs are local-only.
+Search should be case-insensitive and trim whitespace.
 
----
+Debounce only if needed.
 
-# AIVisibility
-
-Add visibility model:
-
-- privateLocalOnly
-- availableForInAppAI
-- availableForChatGPT
-
-Default should always be:
-
-    privateLocalOnly
-
-No existing data should become AI-visible by default.
+Do not over-engineer.
 
 ---
 
-# Step 2: Add Service Protocols
+# 3. Drift Type Filters
 
-Add protocol scaffolding for future architecture.
+Keep/refine quick type filter chips.
 
-Create:
+Suggested filters:
 
-- DriftRepository
-- DriftCapturePipeline
-- DriftClassificationService
-- DriftSearchService
-- ContextPackService
-- ContextExportService
-
-Do not fully implement AI-backed services yet.
-
-Use local/placeholder implementations only where needed.
-
-Current JournalRepository can remain the source of truth for now.
-
-Add adapters where useful:
-
-- JournalEntryToDriftItemMapper
-- DriftItemToJournalEntryMapper, if needed
-
-Do not duplicate persistence unnecessarily.
-
----
-
-# Step 3: UI Terminology Prep
-
-Begin replacing user-facing text where safe.
-
-Prefer:
-
-- Drift
-- Drifts
-- Capture
-- Reflection
-- Spaces
-- Timeline
-- Context
-
-Avoid overusing:
-
-- Journal
-- Journal Entry
-
-But do not break screens/routes if renaming them would be risky.
-
-Safe UI copy updates:
-
-- “Review Entry” can become “Review Drift”
-- “New Entry” can become “New Drift”
-- “Journal” tab can remain temporarily if changing it is risky
-- “Entries” can become “Drifts” where safe
-- “Themes” can remain temporarily until Spaces are implemented
-
-Do not rename files/routes aggressively unless safe.
-
----
-
-# Step 4: Add Type Selection In Review
-
-In the review flow, add a simple Drift Type selector.
-
-When a user records/captures something, the Review screen should allow selecting:
-
-- Reflection
+- All
 - Thought
+- Reflection
 - Goal
 - Idea
 - Memory
-- Mood
-- Decision
 - Task
-- Visual
-- Context
 
-Default for existing voice capture:
+Filters should work together with search.
 
-    Reflection
+Example:
 
-This is the first user-visible step away from pure journaling.
+- selected filter: Goal
+- search: “OpenAI”
+- result: only Goal Drifts matching OpenAI
 
-Do not add AI classification yet.
-
-Manual type selection is enough for now.
-
-Persist selected type if the current persistence model can support it safely.
-
-If persistence cannot support it yet, add the field with a safe migration or store it as metadata.
+Keep the filter UI compact and smooth.
 
 ---
 
-# Step 5: Add Spaces Placeholder
+# 4. Calendar Chevron Animation
 
-Add a lightweight Spaces screen or placeholder if safe.
+In Timeline/calendar, animate the chevron when expanding/collapsing the calendar.
 
-Do not fully build Spaces yet.
+Expected behaviour:
 
-The screen should explain:
+- collapsed state: chevron points down or appropriate collapsed direction
+- expanded state: chevron rotates smoothly
+- animation should feel native and subtle
+- no jumpy layout
 
-    Spaces help you group related Drifts, like goals, ideas, moodboards, and projects.
+Use a simple rotation animation.
 
-If current themes/categories can be shown as early Spaces, do that carefully.
-
-Otherwise create a minimal local placeholder with:
-
-- Inbox
-- Goals
-- Ideas
-- Memories
-
-Keep the UI consistent with Drift.
+Do not rewrite the whole calendar component if only the chevron animation is needed.
 
 ---
 
-# Step 6: Add Context Pack Placeholder
+# 5. Smooth Month Transition Animation
 
-Add a local-only Context Packs placeholder if safe.
+Improve Timeline/calendar month switching.
 
-Purpose:
+When the user changes month:
 
-- explain future AI context packs
-- prepare architecture
-- no MCP
-- no backend
+- current month should slide out
+- new month should slide in
+- direction should match navigation:
+  - next month slides from right
+  - previous month slides from left
+- transition should feel seamless and smooth
+- avoid flickering/reloading jank
+- keep selected date behaviour correct
 
-Copy:
+This applies to:
 
-    Context Packs let you collect Drifts and share them with AI when you choose.
+- swipe month navigation
+- previous/next month controls if present
 
-Add a simple placeholder action:
+Keep the existing calendar model/data logic intact.
 
-    Copy Context for ChatGPT
-
-If easy, generate a simple Markdown export from selected/recent Drifts.
-
-If not easy, leave as polished placeholder.
-
-Do not add ChatGPT API integration.
-
----
-
-# Step 7: Navigation Direction
-
-Move gently toward the future navigation:
-
-- Capture
-- Spaces
-- Timeline
-- Settings
-
-Do not fully restructure navigation if risky.
-
-If the current app uses:
-
-- Journal
-- Insights
-- Settings
-
-Then either:
-
-1. keep current tabs for now and add Spaces/Context gradually, or
-2. rename Journal to Capture/Timeline only if safe.
-
-Prioritise stability.
+Do not remove Timeline calendar functionality.
 
 ---
 
-# Step 8: Persistence Safety
+# 6. Capture/Home Recent Drifts
 
-Do not break existing SwiftData data.
+Recent Drift cards should remain clean and easy to scan.
 
-If adding fields to persistence:
+Cards should show where available:
 
-- use optional/default values
-- default existing entries to reflection
-- default AI visibility to privateLocalOnly
-- default status to active
+- title
+- short body preview
+- Drift Type
+- time/date
+- Space
+- mood
+- image indicator
 
-Do not perform destructive migrations.
-
-Do not delete or hide old entries.
-
----
-
-# Step 9: Privacy
-
-Default all new AI/context functionality to private/local only.
-
-Use copy:
-
-    Drifts are private by default. You choose what to share with AI.
-
-Do not imply ChatGPT access exists yet.
-
-Do not say MCP is live.
-
-Do not say AI can reference Drifts until that functionality exists.
+Existing old journal/reflection entries should still appear as Reflection Drifts.
 
 ---
 
-# Tests
+# 7. Empty States
 
-Add or update Swift Testing tests for:
+If there are no Drifts, show:
 
-- DriftType display names
-- DriftType default for existing entries
-- AIVisibility defaults to privateLocalOnly
-- JournalEntry to DriftItem mapping
-- Review screen saves selected Drift type
-- ContextPack model creation
-- DriftSpace model creation
-- no existing entries are hidden or lost
+    No Drifts yet.
+    Tap the microphone when you are ready to capture a thought.
 
-Use Mockable-generated mocks where practical.
+If search has no results, show:
+
+    No matching Drifts.
+    Try another word or phrase.
+
+Use SFSymbols only.
+
+No illustrations.
+
+---
+
+# 8. UI Style
+
+Keep the current Drift style:
+
+- dark navy/black background
+- purple accent
+- rounded cards
+- soft borders
+- SFSymbols only
+- no illustrations
+- no photography
+- smooth animations
+- Apple-native minimalism
+
+Avoid making the screen look like a generic AI dashboard.
+
+---
+
+# 9. Architecture
+
+Keep the existing MVVM-C architecture.
+
+Do not put filtering/search ranking/business logic directly in SwiftUI views.
+
+Use ViewModel or service logic for:
+
+- search query
+- ranked search results
+- type filter
+- empty state
+- recent Drifts
+- month transition direction
+- calendar expanded/collapsed state
+
+If useful, create a small local search helper/service such as:
+
+    DriftSearchRankingService
+
+or keep it in the ViewModel if the code remains simple.
+
+Do not add backend search.
+
+Do not add AI search.
+
+---
+
+# 10. Tests
+
+Add or update tests where practical for:
+
+- search trims whitespace
+- search is case-insensitive
+- title matches rank above body matches
+- tag/space matches work if supported
+- type filter works
+- search and type filter combine correctly
+- empty search returns normal recent Drifts
+- no-results state works
+- calendar chevron state changes correctly
+- month navigation direction is calculated correctly
+
+Avoid brittle UI tests.
 
 ---
 
@@ -448,9 +336,15 @@ Keep the app compiling.
 Do not break:
 
 - voice capture
-- review/save flow
+- recording
+- transcription
+- listen-back
+- silence handling
+- review/save
+- Spaces
+- Context Packs
+- Timeline/calendar
 - local persistence
-- calendar
 - images
 - mood graph
 - reminders
@@ -466,12 +360,14 @@ Do not break:
 
 After implementation, summarise:
 
-- new models added
-- new services/protocols added
-- terminology changes made
-- Review Drift type selection
-- Spaces placeholder
-- Context Pack placeholder
-- persistence/migration safety
+- Capture/Home title behaviour changes
+- search bar implementation
+- search ranking behaviour
+- Drift type filter behaviour
+- calendar chevron animation
+- month transition animation
+- screenshot path/location
+- key code changes/snippets
 - tests added/updated
-- remaining work to complete the full product pivot
+- manual testing steps
+```

@@ -36,14 +36,14 @@ struct InsightsView: View {
               .frame(maxWidth: .infinity, minHeight: 180)
           } else if let errorMessage = viewModel.errorMessage {
             EmptyStateView(
-              title: "Insights unavailable",
+              title: "Mood history unavailable",
               message: errorMessage,
               icon: AppIcons.chart
             )
           } else if viewModel.entries.isEmpty {
             EmptyStateView(
-              title: "No insights yet",
-              message: "Insights will appear once you have a few Drifts.",
+              title: "No mood history yet",
+              message: "Mood history will appear once you have a few Drifts.",
               icon: AppIcons.chart
             )
           } else {
@@ -53,7 +53,7 @@ struct InsightsView: View {
         .padding(AppSpacing.l)
       }
     }
-    .navigationTitle("Insights")
+    .navigationTitle("Mood History")
     .task(id: reloadToken) {
       await viewModel.load()
     }
@@ -61,7 +61,7 @@ struct InsightsView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Insights")
+      Text("Mood History")
         .font(AppTypography.appTitle)
         .foregroundStyle(AppColors.textPrimary)
 
@@ -77,7 +77,7 @@ struct InsightsView: View {
 
       HStack(spacing: AppSpacing.s) {
         insightCard(
-          title: "This week",
+          title: "Drifts this week",
           value: "\(viewModel.summary.entriesThisWeek)",
           icon: AppIcons.calendar
         )
@@ -212,7 +212,7 @@ struct InsightsView: View {
         in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
       )
       .accessibilityElement(children: .contain)
-      .accessibilityLabel("Mood insights")
+      .accessibilityLabel("Mood history")
     }
   }
 
@@ -252,7 +252,7 @@ struct InsightsView: View {
         in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
       )
       .accessibilityElement(children: .contain)
-      .accessibilityLabel("Theme insights")
+      .accessibilityLabel("Theme history")
     }
   }
 
