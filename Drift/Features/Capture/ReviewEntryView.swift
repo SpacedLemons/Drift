@@ -5,6 +5,7 @@
 //  Created by Lucas Stuart West Rogers on 12/05/2026.
 //
 
+import Charts
 import SwiftUI
 
 struct ReviewEntryView: View {
@@ -34,6 +35,10 @@ struct ReviewEntryView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: AppSpacing.l) {
           header
+          calendarSection
+          moodHistorySection
+
+          sectionTitle("Review Drift")
 
           playbackSection
 
@@ -221,9 +226,175 @@ struct ReviewEntryView: View {
       Text("This unsaved Drift will be removed from this device.")
     }
     .task {
+      await viewModel.loadReviewHistory()
       await viewModel.loadSpaces()
       await viewModel.loadCustomThemes()
       await viewModel.loadPlayback()
+    }
+  }
+
+  private var calendarSection: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.s) {
+      sectionTitle("Calendar")
+
+      CalendarStripView(
+        compactDays: viewModel.dateStripDays,
+        selectedDate: viewModel.selectedDate,
+        selectedMonthTitle: viewModel.selectedMonthTitle,
+        selectedMonthID: viewModel.selectedMonthID,
+        monthTransitionDirection: viewModel.monthTransitionDirection,
+        weekdaySymbols: viewModel.weekdaySymbols,
+        calendarDays: viewModel.calendarDays,
+        isExpanded: viewModel.isCalendarExpanded,
+        toggleExpansion: viewModel.toggleCalendarExpansion,
+        selectDate: viewModel.selectDate,
+        moveMonth: viewModel.moveSelectedMonth,
+        dateHasEntries: viewModel.dateHasMoodHistoryEntries
+      )
+    }
+  }
+
+  @ViewBuilder
+  private var moodHistorySection: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.s) {
+      sectionTitle("Mood History")
+
+      if viewModel.isLoadingReviewHistory {
+        ProgressView()
+          .tint(AppColors.accent)
+          .frame(maxWidth: .infinity, minHeight: 120)
+          .background(
+            AppColors.surface.opacity(0.84),
+            in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
+          )
+      } else if let reviewHistoryErrorMessage = viewModel.reviewHistoryErrorMessage {
+        EmptyStateView(
+          title: "Mood history unavailable",
+          message: reviewHistoryErrorMessage,
+          icon: AppIcons.chartLine
+        )
+      } else if viewModel.moodHistorySummary.totalEntries == 0 {
+        EmptyStateView(
+          title: "No mood history here",
+          message:
+            "Mood History uses Mood Drifts, mood-tagged Reflections, and legacy voice reflections.",
+          icon: AppIcons.mood
+        )
+      } else {
+        moodHistoryCard
+      }
+    }
+  }
+
+  private var moodHistoryCard: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.m) {
+      if let selectedDate = viewModel.selectedDate {
+        Text("Showing \(selectedDate.formatted(date: .abbreviated, time: .omitted))")
+          .font(AppTypography.caption)
+          .foregroundStyle(AppColors.textTertiary)
+      } else {
+        Text("Local mood and reflection history only.")
+          .font(AppTypography.caption)
+          .foregroundStyle(AppColors.textTertiary)
+      }
+
+      HStack(spacing: AppSpacing.s) {
+        moodMetricCard(
+          title: "Review Drifts",
+          value: "\(viewModel.moodHistorySummary.totalEntries)",
+          icon: AppIcons.waveform
+        )
+
+        moodMetricCard(
+          title: "Common mood",
+          value: viewModel.moodHistorySummary.mostCommonMood?.displayName ?? "None",
+          icon: AppIcons.mood
+        )
+      }
+
+      if viewModel.moodHistorySummary.moodTrend.count < 2 {
+        Text("Save at least two mood-related Drifts to see a local trend.")
+          .font(AppTypography.body)
+          .foregroundStyle(AppColors.textSecondary)
+          .fixedSize(horizontal: false, vertical: true)
+      } else {
+        Chart(viewModel.moodHistorySummary.moodTrend) { point in
+          LineMark(
+            x: .value("Date", point.date),
+            y: .value("Mood", point.score)
+          )
+          .interpolationMethod(.catmullRom)
+          .foregroundStyle(AppColors.accent)
+          .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
+
+          PointMark(
+            x: .value("Date", point.date),
+            y: .value("Mood", point.score)
+          )
+          .foregroundStyle(AppColors.accentSecondary)
+        }
+        .chartYScale(domain: 1...5)
+        .chartYAxis {
+          AxisMarks(values: [1, 3, 5]) { value in
+            AxisGridLine()
+              .foregroundStyle(AppColors.border)
+            AxisValueLabel {
+              if let score = value.as(Int.self) {
+                Text(moodAxisLabel(for: score))
+                  .foregroundStyle(AppColors.textTertiary)
+              }
+            }
+          }
+        }
+        .chartXAxis(.hidden)
+        .frame(height: 128)
+      }
+    }
+    .padding(AppSpacing.m)
+    .background(
+      AppColors.surface.opacity(0.84),
+      in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
+    )
+    .overlay {
+      RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
+        .stroke(AppColors.border, lineWidth: 1)
+    }
+  }
+
+  private func moodMetricCard(title: String, value: String, icon: String) -> some View {
+    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+      Image(systemName: icon)
+        .font(.system(size: 16, weight: .semibold))
+        .foregroundStyle(AppColors.accent)
+
+      Text(value)
+        .font(AppTypography.bodyEmphasis)
+        .foregroundStyle(AppColors.textPrimary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.82)
+
+      Text(title)
+        .font(AppTypography.caption)
+        .foregroundStyle(AppColors.textSecondary)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(AppSpacing.s)
+    .background(
+      AppColors.surfaceRaised, in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius))
+  }
+
+  private func sectionTitle(_ title: String) -> some View {
+    Text(title)
+      .font(AppTypography.cardTitle)
+      .foregroundStyle(AppColors.textPrimary)
+  }
+
+  private func moodAxisLabel(for score: Int) -> String {
+    switch score {
+    case 1: "Low"
+    case 3: "Neutral"
+    case 5: "Positive"
+    default: ""
     }
   }
 

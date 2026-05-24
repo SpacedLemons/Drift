@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+enum CalendarMonthTransitionDirection: Equatable {
+  case none
+  case previous
+  case next
+}
+
 struct CalendarDayState: Identifiable, Equatable {
   let id: String
   let date: Date?

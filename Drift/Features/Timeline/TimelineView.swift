@@ -11,21 +11,15 @@ struct TimelineView: View {
   @State private var viewModel: TimelineViewModel
 
   let reloadToken: UUID
-  let moodGraphViewModel: InsightsViewModel?
-  let moodGraphReloadToken: UUID
   let onEntrySelected: (JournalEntry) -> Void
 
   init(
     viewModel: TimelineViewModel,
     reloadToken: UUID = UUID(),
-    moodGraphViewModel: InsightsViewModel? = nil,
-    moodGraphReloadToken: UUID = UUID(),
     onEntrySelected: @escaping (JournalEntry) -> Void
   ) {
     _viewModel = State(initialValue: viewModel)
     self.reloadToken = reloadToken
-    self.moodGraphViewModel = moodGraphViewModel
-    self.moodGraphReloadToken = moodGraphReloadToken
     self.onEntrySelected = onEntrySelected
   }
 
@@ -37,24 +31,7 @@ struct TimelineView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: AppSpacing.l) {
           header
-
-          CalendarStripView(
-            compactDays: viewModel.dateStripDays,
-            selectedDate: viewModel.selectedDate,
-            selectedMonthTitle: viewModel.selectedMonthTitle,
-            selectedMonthID: viewModel.selectedMonthID,
-            monthTransitionDirection: viewModel.monthTransitionDirection,
-            weekdaySymbols: viewModel.weekdaySymbols,
-            calendarDays: viewModel.calendarDays,
-            isExpanded: viewModel.isCalendarExpanded,
-            toggleExpansion: viewModel.toggleCalendarExpansion,
-            selectDate: viewModel.selectDate,
-            moveMonth: viewModel.moveSelectedMonth,
-            dateHasEntries: viewModel.dateHasEntries
-          )
-
           filterPills
-          moodGraphLink
           timelineContent
         }
         .padding(AppSpacing.l)
@@ -69,7 +46,7 @@ struct TimelineView: View {
 
   private var header: some View {
     VStack(alignment: .leading, spacing: AppSpacing.s) {
-      Text("Browse historical Drifts by date and type.")
+      Text("Browse historical Drifts by type.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
     }
@@ -128,52 +105,6 @@ struct TimelineView: View {
   }
 
   @ViewBuilder
-  private var moodGraphLink: some View {
-    if let moodGraphViewModel {
-      NavigationLink {
-        InsightsView(
-          viewModel: moodGraphViewModel,
-          reloadToken: moodGraphReloadToken
-        )
-      } label: {
-        HStack(spacing: AppSpacing.m) {
-          Image(systemName: AppIcons.chartLine)
-            .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(AppColors.accentSecondary)
-            .frame(width: 40, height: 40)
-            .background(AppColors.accentSecondary.opacity(0.14), in: Circle())
-
-          VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            Text("Mood history")
-              .font(AppTypography.bodyEmphasis)
-              .foregroundStyle(AppColors.textPrimary)
-
-            Text("View local mood patterns from saved Drifts.")
-              .font(AppTypography.caption)
-              .foregroundStyle(AppColors.textSecondary)
-          }
-
-          Spacer()
-
-          Image(systemName: AppIcons.chevronRight)
-            .font(.caption)
-            .foregroundStyle(AppColors.textTertiary)
-        }
-        .padding(AppSpacing.m)
-        .background(
-          AppColors.surface.opacity(0.84),
-          in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
-        )
-        .overlay {
-          RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
-            .stroke(AppColors.border, lineWidth: 1)
-        }
-      }
-      .buttonStyle(.plain)
-    }
-  }
-
-  @ViewBuilder
   private var timelineContent: some View {
     if viewModel.isLoading {
       ProgressView()
@@ -210,12 +141,7 @@ struct TimelineView: View {
   NavigationStack {
     TimelineView(
       viewModel: TimelineViewModel(
-        journalRepository: PreviewJournalRepository(),
-        now: { PreviewData.baseDate }
-      ),
-      moodGraphViewModel: InsightsViewModel(
-        journalRepository: PreviewJournalRepository(),
-        now: { PreviewData.baseDate }
+        journalRepository: PreviewJournalRepository()
       ),
       onEntrySelected: { _ in }
     )

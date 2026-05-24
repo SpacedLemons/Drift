@@ -26,9 +26,15 @@ final class ReviewEntryViewModel {
   @ObservationIgnored
   private let dailyEntryLimitService: any DailyEntryLimitService
   @ObservationIgnored
+  private let calendar: Calendar
+  @ObservationIgnored
+  private let now: () -> Date
+  @ObservationIgnored
   private let fileManager: FileManager
   @ObservationIgnored
   private var playbackTimerTask: Task<Void, Never>?
+  @ObservationIgnored
+  private var moodHistoryDaysWithEntries: Set<Date> = []
 
   var title: String
   var transcript: String
@@ -43,9 +49,14 @@ final class ReviewEntryViewModel {
   var pendingTag = ""
   var pendingCustomThemeName = ""
   var imageAttachments: [JournalImageAttachment] = []
+  var selectedDate: Date?
+  var selectedMonth: Date
+  var selectedMoodTrendRange: MoodTrendRange = .last7Days
+  var isCalendarExpanded = false
 
   private(set) var isSaving = false
   private(set) var isLoadingCustomThemes = false
+  private(set) var isLoadingReviewHistory = false
   private(set) var isProcessingImages = false
   private(set) var isPreparingPlayback = false
   private(set) var shouldShowPlaybackSection: Bool
@@ -55,6 +66,10 @@ final class ReviewEntryViewModel {
   private(set) var playbackCurrentTime: TimeInterval = 0
   private(set) var playbackErrorMessage: String?
   private(set) var errorMessage: String?
+  private(set) var reviewHistoryErrorMessage: String?
+  private(set) var moodHistoryEntries: [JournalEntry] = []
+  private(set) var moodHistorySummary = InsightsSummary.empty
+  private(set) var monthTransitionDirection: CalendarMonthTransitionDirection = .none
 
   init(
     draft: ReviewEntryDraft,
@@ -65,6 +80,8 @@ final class ReviewEntryViewModel {
     customThemeService: any CustomThemeService = PreviewCustomThemeService(),
     dailyEntryLimitService: any DailyEntryLimitService = PreviewDailyEntryLimitService(),
     preselectedSpaceIds: [UUID] = [],
+    calendar: Calendar = .current,
+    now: @escaping () -> Date = Date.init,
     fileManager: FileManager = .default
   ) {
     self.draft = draft
@@ -74,6 +91,8 @@ final class ReviewEntryViewModel {
     self.imageAttachmentService = imageAttachmentService
     self.customThemeService = customThemeService
     self.dailyEntryLimitService = dailyEntryLimitService
+    self.calendar = calendar
+    self.now = now
     self.fileManager = fileManager
     title = Self.makeInitialTitle(from: draft.transcript)
     transcript = draft.transcript
@@ -84,6 +103,7 @@ final class ReviewEntryViewModel {
     tags = draft.tags
     selectedSpaceIds = preselectedSpaceIds
     shouldShowPlaybackSection = draft.duration > 0
+    selectedMonth = Self.startOfMonth(for: now(), calendar: calendar)
   }
 
   deinit {
@@ -92,6 +112,79 @@ final class ReviewEntryViewModel {
 
   var shouldShowPlaybackControls: Bool {
     isPlaybackAvailable
+  }
+
+  var visibleMoodHistoryEntries: [JournalEntry] {
+    moodHistoryEntries
+      .filter(matchesSelectedMoodHistoryDate)
+      .sorted { $0.createdAt > $1.createdAt }
+  }
+
+  var dateStripDays: [Date] {
+    let today = calendar.startOfDay(for: now())
+
+    return (0..<7)
+      .reversed()
+      .compactMap { offset in
+        calendar.date(byAdding: .day, value: -offset, to: today)
+      }
+  }
+
+  var selectedMonthTitle: String {
+    selectedMonth.formatted(.dateTime.month(.wide).year())
+  }
+
+  var selectedMonthID: String {
+    Self.calendarIdentity(for: selectedMonth, calendar: calendar)
+  }
+
+  var weekdaySymbols: [String] {
+    let symbols = calendar.veryShortStandaloneWeekdaySymbols
+    guard !symbols.isEmpty else {
+      return []
+    }
+
+    let firstIndex = (calendar.firstWeekday - 1 + symbols.count) % symbols.count
+    return Array(symbols[firstIndex...] + symbols[..<firstIndex])
+  }
+
+  var calendarDays: [CalendarDayState] {
+    guard
+      let monthRange = calendar.range(of: .day, in: .month, for: selectedMonth),
+      let firstDayOfMonth = calendar.date(
+        from: calendar.dateComponents([.year, .month], from: selectedMonth))
+    else {
+      return []
+    }
+
+    let monthID = Self.calendarIdentity(for: firstDayOfMonth, calendar: calendar)
+    let leadingBlankCount =
+      (calendar.component(.weekday, from: firstDayOfMonth) - calendar.firstWeekday + 7) % 7
+    var days = (0..<leadingBlankCount).map { index in
+      CalendarDayState.empty(id: "review-\(monthID)-leading-\(index)")
+    }
+
+    days += monthRange.compactMap { day -> CalendarDayState? in
+      guard let date = calendar.date(byAdding: .day, value: day - 1, to: firstDayOfMonth) else {
+        return nil
+      }
+
+      return CalendarDayState(
+        id: "review-\(monthID)-day-\(day)",
+        date: date,
+        dayNumber: day,
+        hasEntries: dateHasMoodHistoryEntries(date),
+        isSelected: selectedDate.map { calendar.isDate($0, inSameDayAs: date) } ?? false,
+        isToday: calendar.isDateInToday(date)
+      )
+    }
+
+    let trailingBlankCount = (7 - (days.count % 7)) % 7
+    days += (0..<trailingBlankCount).map { index in
+      CalendarDayState.empty(id: "review-\(monthID)-trailing-\(index)")
+    }
+
+    return days
   }
 
   var shouldShowPlaybackLoadingState: Bool {
@@ -121,6 +214,67 @@ final class ReviewEntryViewModel {
 
   func selectDriftType(_ driftType: DriftType) {
     selectedDriftType = driftType
+  }
+
+  func loadReviewHistory() async {
+    guard !isLoadingReviewHistory else { return }
+
+    isLoadingReviewHistory = true
+    reviewHistoryErrorMessage = nil
+    defer { isLoadingReviewHistory = false }
+
+    do {
+      moodHistoryEntries = try await journalRepository.fetchEntries()
+        .filter(InsightsViewModel.isMoodHistoryEligible)
+        .sorted { $0.createdAt > $1.createdAt }
+      moodHistoryDaysWithEntries = Set(
+        moodHistoryEntries.map { calendar.startOfDay(for: $0.createdAt) }
+      )
+      refreshMoodHistorySummary()
+    } catch {
+      moodHistoryEntries = []
+      moodHistoryDaysWithEntries = []
+      moodHistorySummary = .empty
+      reviewHistoryErrorMessage = "We could not load mood history right now."
+    }
+  }
+
+  func selectDate(_ date: Date?) {
+    if let date, selectedDate.map({ calendar.isDate($0, inSameDayAs: date) }) == true {
+      selectedDate = nil
+    } else {
+      selectedDate = date
+      if let date {
+        updateSelectedMonth(Self.startOfMonth(for: date, calendar: calendar))
+      }
+    }
+
+    refreshMoodHistorySummary()
+  }
+
+  func toggleCalendarExpansion() {
+    isCalendarExpanded.toggle()
+  }
+
+  func moveSelectedMonth(by value: Int) {
+    guard value != 0 else {
+      monthTransitionDirection = .none
+      return
+    }
+
+    if let month = calendar.date(byAdding: .month, value: value, to: selectedMonth) {
+      monthTransitionDirection = value > 0 ? .next : .previous
+      selectedMonth = Self.startOfMonth(for: month, calendar: calendar)
+    }
+  }
+
+  func dateHasMoodHistoryEntries(_ date: Date) -> Bool {
+    moodHistoryDaysWithEntries.contains(calendar.startOfDay(for: date))
+  }
+
+  func selectMoodTrendRange(_ range: MoodTrendRange) {
+    selectedMoodTrendRange = range
+    refreshMoodHistorySummary()
   }
 
   func loadSpaces() async {
@@ -364,6 +518,41 @@ final class ReviewEntryViewModel {
       return "\(selectedDriftType.displayName) Drift"
     }
     return String(firstSentence.prefix(48))
+  }
+
+  private func refreshMoodHistorySummary() {
+    moodHistorySummary = InsightsViewModel.calculateSummary(
+      from: visibleMoodHistoryEntries,
+      range: selectedMoodTrendRange,
+      calendar: calendar,
+      now: now()
+    )
+  }
+
+  private func matchesSelectedMoodHistoryDate(_ entry: JournalEntry) -> Bool {
+    guard let selectedDate else { return true }
+    return calendar.isDate(entry.createdAt, inSameDayAs: selectedDate)
+  }
+
+  private func updateSelectedMonth(_ month: Date) {
+    if calendar.isDate(month, equalTo: selectedMonth, toGranularity: .month) {
+      monthTransitionDirection = .none
+      selectedMonth = month
+      return
+    }
+
+    monthTransitionDirection = month > selectedMonth ? .next : .previous
+    selectedMonth = month
+  }
+
+  private static func startOfMonth(for date: Date, calendar: Calendar) -> Date {
+    let components = calendar.dateComponents([.year, .month], from: date)
+    return calendar.date(from: components) ?? calendar.startOfDay(for: date)
+  }
+
+  private static func calendarIdentity(for date: Date, calendar: Calendar) -> String {
+    let components = calendar.dateComponents([.year, .month], from: date)
+    return "\(components.year ?? 0)-\(components.month ?? 0)"
   }
 
   private static func makeInitialTitle(from transcript: String) -> String {

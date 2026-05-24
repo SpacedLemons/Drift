@@ -16,7 +16,6 @@ struct AppShellView: View {
   @State private var spacesViewModel: SpacesViewModel
   @State private var contextPacksViewModel: ContextPacksViewModel
   @State private var timelineViewModel: TimelineViewModel
-  @State private var insightsViewModel: InsightsViewModel
   @State private var gptConnectionViewModel: GPTConnectionViewModel
   @State private var captureCoordinator: CaptureCoordinator
   @State private var settingsCoordinator: SettingsCoordinator
@@ -58,11 +57,6 @@ struct AppShellView: View {
     )
     _timelineViewModel = State(
       initialValue: TimelineViewModel(
-        journalRepository: environment.dependencies.journalRepository
-      )
-    )
-    _insightsViewModel = State(
-      initialValue: InsightsViewModel(
         journalRepository: environment.dependencies.journalRepository
       )
     )
@@ -162,8 +156,6 @@ struct AppShellView: View {
         TimelineView(
           viewModel: timelineViewModel,
           reloadToken: timelineReloadToken,
-          moodGraphViewModel: insightsViewModel,
-          moodGraphReloadToken: timelineReloadToken,
           onEntrySelected: { entry in
             timelinePath.append(.journalEntry(entry.id))
           }

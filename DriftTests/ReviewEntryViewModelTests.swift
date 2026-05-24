@@ -29,6 +29,88 @@ struct ReviewEntryViewModelTests {
   }
 
   @Test
+  func calendarDefaultsCompactOnReviewInitialLoad() {
+    let calendar = calendarForReviewTests()
+    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 24)
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: PreviewJournalRepository(entries: []),
+      calendar: calendar,
+      now: { now }
+    )
+
+    #expect(!viewModel.isCalendarExpanded)
+    #expect(viewModel.selectedDate == nil)
+    #expect(viewModel.monthTransitionDirection == .none)
+    #expect(calendar.component(.year, from: viewModel.selectedMonth) == 2026)
+    #expect(calendar.component(.month, from: viewModel.selectedMonth) == 5)
+  }
+
+  @Test
+  func moodHistoryIncludesMoodDrifts() async throws {
+    let moodDrift = historyEntry(
+      id: fixtureUUID("B2000000-0000-0000-0000-000000000001"),
+      title: "Mood check",
+      driftType: .mood
+    )
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: PreviewJournalRepository(entries: [moodDrift])
+    )
+
+    await viewModel.loadReviewHistory()
+
+    #expect(viewModel.moodHistoryEntries.map(\.id) == [moodDrift.id])
+  }
+
+  @Test
+  func moodHistoryIncludesReflectionDriftsWithMood() async throws {
+    let reflection = historyEntry(
+      id: fixtureUUID("B2000000-0000-0000-0000-000000000002"),
+      title: "Reflection",
+      mood: .reflective,
+      driftType: .reflection
+    )
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: PreviewJournalRepository(entries: [reflection])
+    )
+
+    await viewModel.loadReviewHistory()
+
+    #expect(viewModel.moodHistoryEntries.map(\.id) == [reflection.id])
+    #expect(viewModel.moodHistorySummary.mostCommonMood == .reflective)
+  }
+
+  @Test
+  func moodHistoryExcludesContextIdeaAndTaskDriftsWithoutMood() async throws {
+    let context = historyEntry(
+      id: fixtureUUID("B2000000-0000-0000-0000-000000000003"),
+      title: "Context",
+      driftType: .context
+    )
+    let idea = historyEntry(
+      id: fixtureUUID("B2000000-0000-0000-0000-000000000004"),
+      title: "Idea",
+      driftType: .idea
+    )
+    let task = historyEntry(
+      id: fixtureUUID("B2000000-0000-0000-0000-000000000005"),
+      title: "Task",
+      driftType: .task
+    )
+    let viewModel = ReviewEntryViewModel(
+      draft: makeDraft(),
+      journalRepository: PreviewJournalRepository(entries: [context, idea, task])
+    )
+
+    await viewModel.loadReviewHistory()
+
+    #expect(viewModel.moodHistoryEntries.isEmpty)
+    #expect(viewModel.moodHistorySummary.totalEntries == 0)
+  }
+
+  @Test
   func saveValidatesNonEmptyTranscript() async throws {
     let repository = MockJournalRepository()
     let viewModel = ReviewEntryViewModel(
@@ -336,6 +418,33 @@ struct ReviewEntryViewModelTests {
       .appendingPathExtension("m4a")
     try Data("audio".utf8).write(to: url)
     return url
+  }
+
+  private func historyEntry(
+    id: UUID,
+    title: String,
+    mood: Mood? = nil,
+    driftType: DriftType
+  ) -> JournalEntry {
+    JournalEntry(
+      id: id,
+      createdAt: Date(timeIntervalSince1970: 1_778_600_000),
+      transcript: title,
+      title: title,
+      mood: mood,
+      themes: [],
+      tags: [],
+      source: .typed,
+      driftType: driftType
+    )
+  }
+
+  private func calendarForReviewTests() -> Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.locale = Locale(identifier: "en_US_POSIX")
+    calendar.timeZone = fixtureTimeZone(secondsFromGMT: 0)
+    calendar.firstWeekday = 2
+    return calendar
   }
 }
 

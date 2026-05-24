@@ -40,6 +40,7 @@ final class InsightsViewModel {
 
     do {
       entries = try await journalRepository.fetchEntries()
+        .filter(Self.isMoodHistoryEligible)
       summary = calculateSummary(from: entries)
     } catch {
       entries = []
@@ -51,16 +52,11 @@ final class InsightsViewModel {
   }
 
   func calculateSummary(from entries: [JournalEntry]) -> InsightsSummary {
-    let sortedEntries = entries.sorted { $0.createdAt > $1.createdAt }
-
-    return InsightsSummary(
-      totalEntries: entries.count,
-      entriesThisWeek: entriesThisWeek(entries),
-      currentStreak: currentStreak(entries),
-      mostCommonMood: mostCommonMood(entries),
-      mostCommonThemeName: mostCommonThemeName(entries),
-      moodTrend: moodTrend(sortedEntries, range: selectedMoodTrendRange),
-      recentThemeNames: recentThemeNames(sortedEntries)
+    Self.calculateSummary(
+      from: entries,
+      range: selectedMoodTrendRange,
+      calendar: calendar,
+      now: now()
     )
   }
 
@@ -69,14 +65,53 @@ final class InsightsViewModel {
     summary = calculateSummary(from: entries)
   }
 
-  private func entriesThisWeek(_ entries: [JournalEntry]) -> Int {
-    guard let week = calendar.dateInterval(of: .weekOfYear, for: now()) else { return 0 }
+  static func isMoodHistoryEligible(_ entry: JournalEntry) -> Bool {
+    if entry.mood != nil {
+      return true
+    }
+
+    if entry.driftType == .mood {
+      return true
+    }
+
+    return entry.driftType == .reflection && entry.hasJournalStyleMetadata
+  }
+
+  static func calculateSummary(
+    from entries: [JournalEntry],
+    range: MoodTrendRange,
+    calendar: Calendar,
+    now: Date
+  ) -> InsightsSummary {
+    let sortedEntries = entries.sorted { $0.createdAt > $1.createdAt }
+
+    return InsightsSummary(
+      totalEntries: entries.count,
+      entriesThisWeek: entriesThisWeek(entries, calendar: calendar, now: now),
+      currentStreak: currentStreak(entries, calendar: calendar, now: now),
+      mostCommonMood: mostCommonMood(entries),
+      mostCommonThemeName: mostCommonThemeName(entries),
+      moodTrend: moodTrend(sortedEntries, range: range, calendar: calendar, now: now),
+      recentThemeNames: recentThemeNames(sortedEntries)
+    )
+  }
+
+  private static func entriesThisWeek(
+    _ entries: [JournalEntry],
+    calendar: Calendar,
+    now: Date
+  ) -> Int {
+    guard let week = calendar.dateInterval(of: .weekOfYear, for: now) else { return 0 }
     return entries.filter { week.contains($0.createdAt) }.count
   }
 
-  private func currentStreak(_ entries: [JournalEntry]) -> Int {
+  private static func currentStreak(
+    _ entries: [JournalEntry],
+    calendar: Calendar,
+    now: Date
+  ) -> Int {
     let entryDays = Set(entries.map { calendar.startOfDay(for: $0.createdAt) })
-    var day = calendar.startOfDay(for: now())
+    var day = calendar.startOfDay(for: now)
     var streak = 0
 
     while entryDays.contains(day) {
@@ -88,23 +123,25 @@ final class InsightsViewModel {
     return streak
   }
 
-  private func mostCommonMood(_ entries: [JournalEntry]) -> Mood? {
+  private static func mostCommonMood(_ entries: [JournalEntry]) -> Mood? {
     let moods = entries.compactMap(\.mood)
     return mostCommonValue(moods)
   }
 
-  private func mostCommonThemeName(_ entries: [JournalEntry]) -> String? {
+  private static func mostCommonThemeName(_ entries: [JournalEntry]) -> String? {
     let themes = entries.flatMap { entry in
       entry.themes.map(\.displayName) + entry.customThemes.map(\.displayName)
     }
     return mostCommonValue(themes)
   }
 
-  private func moodTrend(
+  private static func moodTrend(
     _ entries: [JournalEntry],
-    range: MoodTrendRange
+    range: MoodTrendRange,
+    calendar: Calendar,
+    now: Date
   ) -> [MoodTrendPoint] {
-    let startDate = range.startDate(now: now(), calendar: calendar)
+    let startDate = range.startDate(now: now, calendar: calendar)
     let groupedScores = Dictionary(grouping: entries) { entry in
       calendar.startOfDay(for: entry.createdAt)
     }
@@ -122,7 +159,7 @@ final class InsightsViewModel {
       .sorted { $0.date < $1.date }
   }
 
-  private func recentThemeNames(_ entries: [JournalEntry]) -> [String] {
+  private static func recentThemeNames(_ entries: [JournalEntry]) -> [String] {
     var themes: [String] = []
 
     for theme in entries.flatMap({ entry in
@@ -135,9 +172,15 @@ final class InsightsViewModel {
     return themes
   }
 
-  private func mostCommonValue<Value: Hashable>(_ values: [Value]) -> Value? {
+  private static func mostCommonValue<Value: Hashable>(_ values: [Value]) -> Value? {
     let counts = Dictionary(grouping: values, by: { $0 }).mapValues(\.count)
     return counts.max { lhs, rhs in lhs.value < rhs.value }?.key
+  }
+}
+
+extension JournalEntry {
+  fileprivate var hasJournalStyleMetadata: Bool {
+    source == .voice || duration != nil || !themes.isEmpty || !customThemes.isEmpty
   }
 }
 
