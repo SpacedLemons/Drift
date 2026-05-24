@@ -54,4 +54,9 @@ enum AppIcons {
   static let photoAdd = "photo.badge.plus"
   static let chartLine = "chart.xyaxis.line"
   static let question = "questionmark.circle"
+  static let personBadgeKey = "person.badge.key"
+  static let wand = "wand.and.sparkles"
+  static let stop = "stop.circle"
+  static let tray = "tray"
+  static let rectangleAndPencil = "rectangle.and.pencil.and.ellipsis"
 }

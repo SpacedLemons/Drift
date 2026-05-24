@@ -39,9 +39,7 @@ struct SettingsViewModelTests {
 
     let rows = viewModel.navigationRows
 
-    #expect(rows.contains { $0.route == .chatGPTConnection })
-    #expect(rows.contains { $0.title == "ChatGPT Connection" })
-    #expect(rows.contains { $0.subtitle == "Choose what Drift can share with ChatGPT" })
+    #expect(!rows.contains { $0.title == "ChatGPT Connection" })
     #expect(rows.contains { $0.route == .voiceTranscription })
     #expect(rows.contains { $0.title == "Voice & Transcription" })
     #expect(rows.contains { $0.subtitle == "Recording, transcription, and audio options" })

@@ -29,11 +29,20 @@ struct AppDependencyContainer: Sendable {
   let exportService: any ExportService & Sendable
   let backupService: any BackupService & Sendable
   let userIdentityService: any UserIdentityService & Sendable
-  let chatGPTConnectionService: any ChatGPTConnectionService & Sendable
+  let gptConnectionService: any GPTConnectionService & Sendable
+  let driftProposalRepository: any DriftProposalRepository & Sendable
+  let gptProposalService: any GPTProposalService & Sendable
 
   static func unavailable() -> AppDependencyContainer {
     let journalRepository = UnavailableJournalRepository()
     let driftRepository = JournalBackedDriftRepository(journalRepository: journalRepository)
+    let gptConnectionService = LocalGPTConnectionService()
+    let driftProposalRepository = LocalDriftProposalRepository()
+    let gptProposalService = LocalGPTProposalService(
+      proposalRepository: driftProposalRepository,
+      driftRepository: driftRepository,
+      connectionService: gptConnectionService
+    )
 
     return AppDependencyContainer(
       journalRepository: journalRepository,
@@ -57,7 +66,9 @@ struct AppDependencyContainer: Sendable {
       exportService: LocalMarkdownExportService(),
       backupService: PlaceholderBackupService(),
       userIdentityService: PreviewUserIdentityService(),
-      chatGPTConnectionService: LocalChatGPTConnectionService()
+      gptConnectionService: gptConnectionService,
+      driftProposalRepository: driftProposalRepository,
+      gptProposalService: gptProposalService
     )
   }
 
@@ -66,6 +77,13 @@ struct AppDependencyContainer: Sendable {
     let driftRepository = JournalBackedDriftRepository(journalRepository: journalRepository)
     let spaceRepository = SwiftDataSpaceRepository(modelContainer: modelContainer)
     let storeKitSubscriptionService = StoreKitSubscriptionService()
+    let gptConnectionService = LocalGPTConnectionService()
+    let driftProposalRepository = LocalDriftProposalRepository()
+    let gptProposalService = LocalGPTProposalService(
+      proposalRepository: driftProposalRepository,
+      driftRepository: driftRepository,
+      connectionService: gptConnectionService
+    )
 
     #if DEBUG
       let debugOverrideStore = DebugEntitlementOverrideStore()
@@ -114,7 +132,9 @@ struct AppDependencyContainer: Sendable {
       exportService: LocalMarkdownExportService(),
       backupService: PlaceholderBackupService(),
       userIdentityService: KeychainUserIdentityService(),
-      chatGPTConnectionService: LocalChatGPTConnectionService()
+      gptConnectionService: gptConnectionService,
+      driftProposalRepository: driftProposalRepository,
+      gptProposalService: gptProposalService
     )
   }
 }

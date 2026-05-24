@@ -11,6 +11,7 @@ enum AppTab: Hashable {
   case capture
   case spaces
   case timeline
+  case gpt
   case settings
 
   @ViewBuilder
@@ -19,6 +20,7 @@ enum AppTab: Hashable {
     case .capture: Label("Capture", systemImage: "mic")
     case .spaces: Label("Spaces", systemImage: "square.grid.2x2")
     case .timeline: Label("Timeline", systemImage: "clock")
+    case .gpt: Label("GPT", systemImage: "sparkles")
     case .settings: Label("Settings", systemImage: "gearshape")
     }
   }

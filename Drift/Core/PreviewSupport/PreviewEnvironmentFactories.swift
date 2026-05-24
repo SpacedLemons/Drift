@@ -11,6 +11,13 @@ extension AppDependencyContainer {
   ) -> AppDependencyContainer {
     let journalRepository = PreviewJournalRepository(entries: entries)
     let driftRepository = JournalBackedDriftRepository(journalRepository: journalRepository)
+    let gptConnectionService = LocalGPTConnectionService()
+    let driftProposalRepository = LocalDriftProposalRepository()
+    let gptProposalService = LocalGPTProposalService(
+      proposalRepository: driftProposalRepository,
+      driftRepository: driftRepository,
+      connectionService: gptConnectionService
+    )
 
     return AppDependencyContainer(
       journalRepository: journalRepository,
@@ -34,7 +41,9 @@ extension AppDependencyContainer {
       exportService: LocalMarkdownExportService(),
       backupService: PreviewBackupService(),
       userIdentityService: PreviewUserIdentityService(),
-      chatGPTConnectionService: LocalChatGPTConnectionService()
+      gptConnectionService: gptConnectionService,
+      driftProposalRepository: driftProposalRepository,
+      gptProposalService: gptProposalService
     )
   }
 }

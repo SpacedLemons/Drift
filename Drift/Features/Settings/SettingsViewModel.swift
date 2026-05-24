@@ -45,13 +45,6 @@ final class SettingsViewModel {
   var navigationRows: [SettingsNavigationRowDescriptor] {
     [
       SettingsNavigationRowDescriptor(
-        route: .chatGPTConnection,
-        icon: AppIcons.sparkles,
-        title: "ChatGPT Connection",
-        subtitle: "Choose what Drift can share with ChatGPT",
-        trailingValue: "Future"
-      ),
-      SettingsNavigationRowDescriptor(
         route: .reminders,
         icon: AppIcons.bell,
         title: "Reminder Settings",
@@ -267,12 +260,6 @@ final class SettingsViewModel {
     formatter.timeStyle = .short
     return formatter
   }()
-}
-
-enum LocalIdentityStatus: Equatable, Sendable {
-  case unknown
-  case ready(createdAt: Date)
-  case unavailable
 }
 
 struct SettingsNavigationRowDescriptor: Identifiable, Equatable, Sendable {

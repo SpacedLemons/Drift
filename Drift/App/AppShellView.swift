@@ -17,6 +17,7 @@ struct AppShellView: View {
   @State private var contextPacksViewModel: ContextPacksViewModel
   @State private var timelineViewModel: TimelineViewModel
   @State private var insightsViewModel: InsightsViewModel
+  @State private var gptConnectionViewModel: GPTConnectionViewModel
   @State private var captureCoordinator: CaptureCoordinator
   @State private var settingsCoordinator: SettingsCoordinator
   @State private var selectedTab: AppTab = .capture
@@ -63,6 +64,14 @@ struct AppShellView: View {
     _insightsViewModel = State(
       initialValue: InsightsViewModel(
         journalRepository: environment.dependencies.journalRepository
+      )
+    )
+    _gptConnectionViewModel = State(
+      initialValue: GPTConnectionViewModel(
+        userIdentityService: environment.dependencies.userIdentityService,
+        gptConnectionService: environment.dependencies.gptConnectionService,
+        gptProposalService: environment.dependencies.gptProposalService,
+        spaceRepository: environment.dependencies.spaceRepository
       )
     )
     _captureCoordinator = State(
@@ -166,6 +175,12 @@ struct AppShellView: View {
       .tabItem { AppTab.timeline.label }
       .tag(AppTab.timeline)
 
+      NavigationStack {
+        GPTConnectionView(viewModel: gptConnectionViewModel)
+      }
+      .tabItem { AppTab.gpt.label }
+      .tag(AppTab.gpt)
+
       NavigationStack(path: $bindableSettingsCoordinator.path) {
         SettingsView(
           viewModel: SettingsViewModel(
@@ -257,16 +272,6 @@ struct AppShellView: View {
   @ViewBuilder
   private func settingsDestination(_ route: SettingsRoute) -> some View {
     switch route {
-    case .chatGPTConnection:
-      ChatGPTConnectionView(
-        viewModel: ChatGPTConnectionViewModel(
-          userIdentityService: environment.dependencies.userIdentityService,
-          chatGPTConnectionService: environment.dependencies.chatGPTConnectionService,
-          spaceRepository: environment.dependencies.spaceRepository,
-          contextPackService: environment.dependencies.contextPackService,
-          driftRepository: environment.dependencies.driftRepository
-        )
-      )
     case .reminders:
       ReminderSettingsView(
         viewModel: ReminderSettingsViewModel(

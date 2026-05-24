@@ -125,13 +125,6 @@ struct SettingsView: View {
           subtitle: viewModel.localIdentitySubtitle,
           trailingValue: viewModel.localIdentityTrailingValue
         )
-
-        Divider().overlay(AppColors.border)
-
-        settingsNavigationRow(
-          for: .chatGPTConnection,
-          action: coordinator.showChatGPTConnection
-        )
       }
 
       SettingsSectionCard(title: "Reminders") {

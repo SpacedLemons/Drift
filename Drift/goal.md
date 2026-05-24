@@ -1,27 +1,49 @@
-# Drift Context Board Completion Goal
+# Drift GPT Connection + Auto Drift Proposal Goal
 
-Follow the updated Drift README/project direction.
+Follow the updated Drift product direction.
 
-Drift is now a voice-first personal context board for AI.
+Drift is a voice-first personal context board for AI.
 
-Slogan:
+This goal is to connect the current Drift app architecture with the future GPT/MCP experience in a practical way.
 
-> Let your thoughts Drift.
+The goal is **not** to build the production backend/MCP server yet.
 
-The app has already been remodelled away from being only a journal. It now has Drift Types, Spaces, Timeline, Context Packs, Capture/Home, search, and the beginnings of the new product direction.
+The goal is to build the full app-side architecture, UI, local proposal system, and mock GPT flow so the product behaves like GPT can suggest and create Drifts from conversations.
 
-This goal is to make the new core experience feel complete, coherent, and useful.
+This should prepare Drift for the real MCP/App SDK backend later.
 
-Do not add backend/networking.
-Do not add MCP.
-Do not add OpenAI.
+---
+
+# Product Behaviour
+
+When Drift is connected to GPT in the future, the user should be able to talk naturally in ChatGPT.
+
+GPT should be able to recognise useful context and say:
+
+> I should save this as a Drift.
+
+Then Drift should receive a proposed Drift or update.
+
+The user should be able to review, accept, edit, or reject it.
+
+Eventually, users may enable an auto-save mode, but for now the default must be:
+
+> GPT suggests. User reviews before saving.
+
+---
+
+# Important Constraints
+
+Do not build the real backend.
+Do not build the real MCP server.
+Do not add OpenAI API calls.
 Do not add Claude/Gemini.
-Do not add new paid features.
-Do not rebuild the whole app from scratch.
-Do not remove existing user data.
-Do not break existing MVP functionality.
+Do not add networking unless already required by existing app code.
+Do not upload private Drifts.
+Do not silently save GPT-created Drifts without review.
+Do not break the existing local app.
 
-This goal should improve the free/local product experience across the app.
+Everything in this goal should work locally with mock/prototype data.
 
 ---
 
@@ -31,8 +53,8 @@ After making changes:
 
 1. Build the project if practical.
 2. Run the relevant SwiftUI previews or simulator screens if practical.
-3. Take screenshots of the simulator or SwiftUI previews for the main changed screens.
-4. Include the screenshot paths/locations in the final summary.
+3. Take screenshots of the simulator or SwiftUI previews for changed screens.
+4. Include screenshot paths/locations in the final summary.
 5. Show the important code changes made, especially new/updated files and key snippets.
 6. Summarise what changed and how to manually test it.
 
@@ -40,346 +62,433 @@ If screenshots cannot be captured, explain why and still provide the key code ch
 
 ---
 
-# Goal In Plain Terms
+# Core UX
 
-Make Drift feel like a real personal context board.
+The GPT tab should become the main place where users manage the GPT connection.
 
-A user should be able to:
+The tab should support these states:
 
-- capture a thought quickly
-- choose what kind of Drift it is
-- put it into one or more Spaces
-- open a Space and see everything related to that area
-- create a Context Pack from important Drifts/Spaces
-- copy or share that Context Pack to ChatGPT
-- browse everything later in Timeline
-- understand that everything is private/local unless they choose to share it
+1. Not connected
+2. Connect to GPT
+3. Connected
+4. GPT activity
+5. Pending GPT updates
+6. Manage connection
 
-The experience should feel fluid, calm, premium, and useful.
+The tab should not show markdown starter prompts anymore.
 
----
+The tab should not show confusing context selection/review screens as the main experience.
 
-# Core Product Concepts
+The product should feel simple:
 
-Use these terms consistently in user-facing UI:
-
-- Drift
-- Drifts
-- Capture
-- Space
-- Spaces
-- Timeline
-- Context Pack
-- Copy for ChatGPT
-- Share Context
-
-Avoid old journal-heavy wording where possible.
-
-Acceptable old wording only if changing it would be risky or if it still makes sense in a specific context.
-
-A Drift can be:
-
-- Thought
-- Reflection
-- Goal
-- Idea
-- Memory
-- Mood
-- Decision
-- Task
-- Visual
-- Context
-
-Existing old journal entries should continue to appear as Reflection Drifts.
+- Connect to GPT
+- GPT can create Drifts
+- GPT can update ongoing topics
+- GPT suggests Spaces
+- User reviews before saving
+- Recent GPT activity appears here
 
 ---
 
-# Main Areas To Improve
+# GPT Tab — Not Connected State
 
-## 1. Capture/Home
+When not connected, the GPT tab should show:
 
-Capture should feel like the fast entry point into Drift.
+Title:
 
-It should include:
+    GPT
 
-- native large/inline title behaviour for “Drift” if already implemented
-- subtitle: “Let your thoughts Drift.”
-- Drift-styled search
-- Drift Type filter chips
-- recent Drifts
-- clear empty state
-- floating purple mic button as the primary action
+Subtitle:
 
-Improve anything that still feels like old journal UI.
+    Connect Drift to GPT for seamless thought capture and updates.
 
-Search should remain local-only.
+Main card:
 
-Search should rank title matches higher than body matches.
+    GPT can create Drifts, continue ongoing topics, and keep your thoughts organised.
 
-Type filters and search should work together.
+Primary button:
 
----
+    Connect to GPT
 
-## 2. Review Drift Flow
+Status cards:
 
-The review flow should feel complete.
+    Private by default
+    Drift only shares what you allow.
 
-When a user finishes recording or creates a new Drift, Review Drift should allow:
+    Connection
+    Not connected
 
-- editing the title
-- editing the body/transcript
-- selecting Drift Type
-- selecting one or more Spaces
-- adding/removing tags
-- selecting mood where relevant
-- adding/removing images if supported
-- listen-back if temporary audio exists
-- saving as a Drift
+    Local Drift identity
+    Ready
 
-Default voice capture type can remain Reflection.
+Do not mention markdown.
 
-Do not add AI classification yet.
+Do not mention starter prompts.
 
-Manual selection is enough.
+Do not imply the real MCP connection is live yet.
 
-Make sure the save action uses “Save Drift” language where safe.
+If the connection is still local/mock-only, label it clearly in DEBUG or internal copy where appropriate.
 
 ---
 
-## 3. Spaces
+# Connect To GPT Flow
 
-Spaces should feel like first-class boards, not placeholders.
+When the user taps Connect to GPT, show a full-screen/native flow.
 
-A user should be able to:
+This flow should support future authentication but remain local/mock for now.
 
-- view all Spaces
-- create a Space
-- edit a Space
-- delete a Space with confirmation
-- open a Space Detail screen
-- see Drifts inside a Space
-- add existing Drifts to a Space
-- remove Drifts from a Space without deleting the Drift
-- create a new Drift directly into a Space if practical
+Screen title:
 
-A Space should support:
+    Connect to GPT
 
-- name
-- optional description
-- SFSymbol icon
-- accent colour
-- pinned state if already supported
-- Drift count
+Copy:
 
-Deleting a Space must not delete the Drifts inside it.
+    Use a secure native sign-in to connect Drift.
 
-It only removes the grouping.
+Options:
 
----
+    Continue with Passkey
+    Continue with Apple
 
-## 4. Space Detail
+For now, these can be local/mock actions that transition the app into a connected mock state.
 
-Space Detail should feel useful.
+Do not implement real passkeys yet.
+Do not implement Sign in with Apple yet.
+Do not add backend auth yet.
 
-It should show:
+Add clear TODOs:
 
-- Space title
-- icon/accent
-- description if available
-- Drift count
-- list of Drifts in that Space
-- empty state
-- actions:
-  - Add Drift
-  - Create Context Pack
-  - Edit Space
-  - Remove Drift from Space where practical
+- passkey registration
+- Apple sign-in fallback
+- OAuth for future MCP
+- backend token exchange
 
-If the Space has no Drifts, show calm copy:
+Also include reassurance:
 
-    No Drifts in this Space yet.
-    Add thoughts, goals, ideas, or memories when they belong here.
+    No email or password is needed for local Drift use.
+
+    You can disconnect at any time.
 
 ---
 
-## 5. Context Packs
+# GPT Tab — Connected State
 
-Context Packs are extremely important.
+When connected, the GPT tab should show:
 
-They are the bridge between Drift and AI without needing MCP/backend yet.
+Title:
 
-A user should be able to:
+    GPT
 
-- create a Context Pack
-- choose one or more Spaces
-- choose individual Drifts
-- preview the generated context
-- copy it as Markdown
-- share it using the native share sheet
-- edit/delete the Context Pack
+Subtitle:
 
-Context Packs should make it obvious that the user chooses what to share.
+    Connected and ready to help.
 
-Use copy like:
+Connected status card:
 
-    Context Packs let you collect Drifts and share them with AI when you choose.
+    Connected to GPT
+    Secure connection active
 
-Do not say ChatGPT is connected yet.
+Capabilities section:
 
-Use:
+    What GPT can do
 
-    Copy for ChatGPT
+Rows:
 
-or:
+- Create Drifts
+- Update ongoing topics
+- Suggest Spaces
+- Review before saving
 
-    Share Context
+Each should show an enabled/check state.
 
-Do not use:
+Recent activity section:
 
-    Sync with ChatGPT
+    Recent activity
 
-or:
+Example rows:
 
-    Connected to ChatGPT
+- Created Drift · Product idea
+- Updated Drift · OpenAI Career
+- Suggested Space · Drift App
 
-because MCP/backend is not implemented yet.
+Actions:
 
----
+- Manage connection
+- Disconnect
 
-# Markdown Context Export
+Disconnect should use destructive styling and confirmation.
 
-Improve or implement Markdown generation for Context Packs.
-
-The Markdown should be useful when pasted into ChatGPT.
-
-It should be structured and readable.
-
-Example format:
-
-    # Context Pack: OpenAI Career
-
-    Curated from Drift.
-
-    ## Spaces Included
-
-    - OpenAI Career
-    - Goals
-    - Ideas
-
-    ## Goals
-
-    - I want to work at OpenAI.
-    - I am building Drift as a voice-first context board for AI.
-
-    ## Ideas
-
-    - MCPKit for Apple apps.
-    - Codex usage monitor.
-
-    ## Decisions
-
-    - Drift should remain local-first.
-    - iCloud backup should be free.
-
-    ## Recent Drifts
-
-    ...
-
-Do not include Drifts that are not selected or included through a selected Space.
-
-Do not upload anything.
-
-Everything stays local.
+Disconnecting should not delete local Drifts.
 
 ---
 
-# Timeline
+# GPT Activity Model
 
-Timeline should remain the historical browsing layer.
+Add a local model for GPT activity.
 
-Make sure Timeline still works well after the product reframe.
+Suggested model:
 
-Timeline should support:
+    GPTActivityItem
 
-- calendar/month browsing
-- smooth month transitions
-- historical Drifts
-- filtering by Drift Type
-- search if already supported
-- mood graph/history if already present
+Fields:
 
-Capture is for fast input.
-
-Timeline is for history.
-
----
-
-# Drift Detail
-
-Drift Detail should reflect the broader model.
-
-It should show:
-
+- id
+- createdAt
+- kind
 - title
-- type
-- body/content
-- created/updated date
-- Spaces
-- tags
-- mood if available
-- images if attached
-- related Context Packs if available
-- edit action
-- delete action
-- share/export action if already supported
+- subtitle
+- relatedDriftId
+- relatedSpaceId
+- status
 
-Use “Drift” language where possible.
+Kinds:
+
+- createdDrift
+- updatedDrift
+- suggestedSpace
+- createdProposal
+- acceptedProposal
+- rejectedProposal
+
+This is local/mock for now.
+
+Later it can be backed by MCP/backend events.
 
 ---
 
-# Privacy And AI Visibility
+# Drift Proposal System
 
-All new AI/context concepts must remain private/local by default.
+Add or complete a proposal system.
 
-Default AI visibility:
+This is the key architecture for future MCP.
 
-    privateLocalOnly
+GPT should not directly mutate private data by default.
+
+It should create proposals.
+
+Add models:
+
+    DriftProposal
+
+    DriftProposalAction
+
+    DriftProposalStatus
+
+Possible actions:
+
+- createNewDrift
+- updateExistingDrift
+- appendToSpace
+- suggestSpace
+- createContextPack
+
+Possible status:
+
+- pending
+- accepted
+- rejected
+- edited
+- saved
+
+Proposal fields:
+
+- id
+- createdAt
+- updatedAt
+- source
+- action
+- status
+- title
+- body
+- suggestedDriftType
+- suggestedSpaceIds
+- suggestedTags
+- suggestedMood
+- targetDriftId
+- targetSpaceId
+- confidence
+- summary
+
+Source should include:
+
+    gpt
+
+The default state should be:
+
+    pending
+
+---
+
+# Pending GPT Updates
+
+Add a section in the GPT tab:
+
+    Pending GPT Updates
+
+If none:
+
+    No pending updates.
+    When GPT suggests a new Drift or update, it will appear here for review.
+
+If there are pending proposals, show cards.
+
+Each card should show:
+
+- proposed title
+- action type
+- suggested Space
+- short summary
+- created date/time
+- status
+
+Actions:
+
+- Review
+- Accept
+- Reject
+
+Accept should create/update the local Drift using existing repositories/services.
+
+Reject should mark the proposal as rejected.
+
+Review should open a Review Proposal screen.
+
+---
+
+# Review GPT Proposal Screen
+
+Add a screen for reviewing GPT-created proposals.
+
+The user should be able to:
+
+- edit title
+- edit body/summary
+- change Drift Type
+- change Space
+- change tags
+- accept/save
+- reject/discard
+
+If proposal action is `createNewDrift`:
+
+- accepting creates a new Drift
+
+If proposal action is `updateExistingDrift`:
+
+- accepting updates/appends to the existing Drift
+
+If updating existing Drifts is risky or not fully implemented yet:
+
+- support createNewDrift fully
+- scaffold updateExistingDrift with TODOs
+- do not break app state
 
 Use copy:
 
-    Drifts are private by default. You choose what to share.
+    Review before saving
 
-Do not imply:
-
-- MCP is live
-- ChatGPT has access
-- AI can automatically read Drifts
-- cloud sync is required
-
-Context Pack copy/share is local and user-controlled.
+Do not silently save unless the user has explicitly enabled auto-save later.
 
 ---
 
-# UI Style
+# Mock GPT Flow
 
-Keep the current Drift style:
+Add a local mock/prototype flow so the product can be tested without backend.
 
-- dark navy/black background
-- purple accent
-- rounded cards
-- soft borders
-- SFSymbols only
-- no photography
-- no illustrations
-- calm spacing
-- smooth animations
-- Apple-native minimalism
+In DEBUG or local mode, allow generating sample GPT proposals.
 
-Avoid making Drift feel like a generic AI dashboard.
+Possible debug/internal action:
 
-Avoid cramped layouts.
+    Simulate GPT Drift
 
-Use the latest UI mockups and current app screenshots as visual reference.
+This should create sample proposals such as:
+
+1. Create Drift:
+   Title: Drift as AI context board
+   Type: Idea
+   Space: Drift App
+
+2. Update Drift:
+   Title: OpenAI Career
+   Suggested update: MCPKit could become a standout project.
+
+3. Suggest Space:
+   Title: Backend Architecture
+   Space: Drift App
+
+This lets the UI be tested before MCP exists.
+
+Keep this clearly local/mock.
+
+Do not expose confusing debug controls in release if inappropriate.
+
+---
+
+# Auto Drift Mode Placeholder
+
+Add a future-facing setting in Manage Connection:
+
+    Auto Drift conversations
+
+Default:
+
+    Off
+
+Copy:
+
+    When enabled in the future, GPT will be able to save useful conversation moments as Drift proposals automatically.
+
+For now:
+
+- keep it disabled or local-only
+- do not make it actually call GPT/backend
+- do not silently save anything
+
+This setting prepares the product for the future behaviour where GPT can decide:
+
+    I should log this as a Drift.
+
+---
+
+# Manage Connection Screen
+
+Add or improve a Manage GPT Connection screen.
+
+It should include:
+
+- connection status
+- capabilities
+- Auto Drift conversations placeholder
+- require review before saving toggle
+- selected Spaces GPT can suggest/use, if already supported
+- disconnect action
+
+Important default:
+
+    Require review before saving: ON
+
+Copy:
+
+    GPT-created Drifts stay pending until you approve them.
+
+---
+
+# Local Identity
+
+Use the existing anonymous local Drift identity if already implemented.
+
+Do not treat the UUID as authentication.
+
+Add clear comments if needed:
+
+    Local Drift identity is not backend authentication.
+    Future GPT connection requires passkeys/OAuth.
+
+The GPT connection UI may show:
+
+    Local Drift identity: Ready
+
+but should not show the raw UUID.
 
 ---
 
@@ -395,71 +504,104 @@ Keep existing architecture:
 - Swift Testing
 - Mockable
 
-Do not put business logic in SwiftUI views.
+Add or update:
 
-Use ViewModels/services for:
+- GPTConnectionView
+- GPTConnectionViewModel
+- ConnectGPTView
+- ManageGPTConnectionView
+- GPTActivityItem
+- DriftProposal
+- DriftProposalAction
+- DriftProposalStatus
+- DriftProposalRepository or service
+- LocalGPTConnectionService
+- GPTProposalService
+- ReviewGPTProposalView
+- ReviewGPTProposalViewModel
 
-- search/filtering
-- Space membership
-- Context Pack membership
-- Markdown generation
-- Timeline filtering
-- Drift Type handling
+Views should not contain business logic.
 
-Use adapters/mappers if the codebase still has old JournalEntry naming internally.
-
-Do not perform a risky full rename unless it is clearly safe.
-
-Stability matters more than perfect naming.
+Proposal creation, accepting, rejecting, and saving should live in services/ViewModels.
 
 ---
 
 # Persistence
 
-Persist safely:
+Persist locally:
 
-- Drift Type
-- Spaces
-- Drift-to-Space membership
-- Context Packs
-- Context Pack membership
-- AI visibility
-- tags/mood/images as already supported
+- GPT connection mock/local state
+- GPT activity items
+- Drift proposals
+- proposal status
+- manage connection preferences
 
-Existing entries must remain accessible.
+If persistence is too much for this goal, use a clean local repository/service and add TODOs for SwiftData persistence.
 
-Existing entries should default to:
+But proposals should survive basic navigation where practical.
 
-- Drift Type: Reflection
-- AI Visibility: privateLocalOnly
+Do not upload proposals anywhere.
 
-Do not perform destructive migrations.
+---
 
-Do not delete or hide data.
+# Privacy
+
+Use clear copy:
+
+    Drifts are private by default.
+
+    GPT-created Drifts stay pending until you approve them.
+
+    Disconnecting GPT does not delete local Drifts.
+
+Avoid claiming:
+
+- real GPT connection is live
+- MCP is implemented
+- ChatGPT can access private data
+- skill installation is complete
+- automatic GPT saving is live
+
+---
+
+# UI Style
+
+Use the latest GPT tab mockup as visual reference.
+
+Keep Drift style:
+
+- dark navy/black background
+- purple accent
+- teal success/privacy accent
+- rounded cards
+- soft borders
+- SFSymbols only
+- no photography
+- no illustrations
+- calm spacing
+- Apple-native minimalism
+
+The GPT tab should feel simple, not like a settings dump.
 
 ---
 
 # Tests
 
-Add or update Swift Testing tests where practical for:
+Add or update Swift Testing tests for:
 
-- Capture search ranking
-- type filtering
-- creating a Space
-- editing a Space
-- deleting a Space does not delete Drifts
-- adding a Drift to a Space
-- removing a Drift from a Space does not delete it
-- creating a Context Pack
-- adding Spaces to a Context Pack
-- adding Drifts to a Context Pack
-- Markdown Context Pack generation
-- Context Pack export only includes selected content
-- existing entries default to Reflection
-- AIVisibility defaults to privateLocalOnly
-- Timeline still loads historical Drifts
+- default GPT connection state is not connected
+- connecting in mock mode changes state to connected
+- disconnecting returns to not connected
+- disconnecting does not delete local Drifts
+- creating a GPT proposal adds pending proposal
+- accepting createNewDrift proposal creates a Drift
+- rejecting proposal marks rejected
+- pending proposals appear in GPT tab state
+- require review before saving defaults to true
+- local Drift identity is not exposed as auth
+- Auto Drift mode defaults to off
 
-Avoid brittle UI tests.
+Use Mockable where practical.
 
 ---
 
@@ -469,20 +611,16 @@ Keep the app compiling.
 
 Do not break:
 
+- Capture
+- Spaces
+- Context Packs
+- Timeline
 - voice capture
-- recording
 - transcription
-- listen-back
-- silence handling
-- Review Drift
 - local persistence
-- Timeline/calendar
 - images
-- mood graph
-- reminders
 - backup/restore
 - paywall foundation
-- StoreKit
 - settings
 - export
 - test suite
@@ -493,15 +631,17 @@ Do not break:
 
 After implementation, summarise:
 
-- Capture/Home improvements
-- Review Drift improvements
-- Spaces improvements
-- Space Detail improvements
-- Context Pack improvements
-- Markdown export behaviour
-- Timeline changes if any
-- screenshots captured and their paths
+- GPT tab changes
+- Connect to GPT flow
+- connected state UI
+- GPT activity implementation
+- Drift proposal models/services
+- pending updates UI
+- Review GPT Proposal screen
+- mock GPT proposal flow
+- persistence approach
+- screenshots captured and paths
 - key code changes/snippets
 - tests added/updated
 - manual testing steps
-- any remaining TODOs
+- remaining future work for real passkeys/OAuth/MCP/backend
