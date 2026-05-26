@@ -17,14 +17,24 @@ final class JournalHomeViewModel {
   private let spaceRepository: any SpaceRepository
   @ObservationIgnored
   private let searchRankingService: DriftSearchRankingService
+  @ObservationIgnored
+  private let calendar: Calendar
+  @ObservationIgnored
+  private let now: () -> Date
+  @ObservationIgnored
+  private var daysWithEntries: Set<Date> = []
 
   private(set) var entries: [JournalEntry] = []
   private(set) var spacesByID: [UUID: DriftSpace] = [:]
   private(set) var isLoading = false
   private(set) var errorMessage: String?
+  private(set) var monthTransitionDirection: CalendarMonthTransitionDirection = .none
 
   var searchText = ""
   var selectedDriftTypeFilter: DriftType?
+  var selectedDate: Date?
+  var selectedMonth: Date
+  var isCalendarExpanded = false
 
   var shouldShowFirstRunIntro: Bool {
     !isLoading && errorMessage == nil && entries.isEmpty && !isSearching
@@ -33,11 +43,17 @@ final class JournalHomeViewModel {
   init(
     journalRepository: any JournalRepository,
     spaceRepository: any SpaceRepository = LocalSpaceRepository(),
-    searchRankingService: DriftSearchRankingService = DriftSearchRankingService()
+    searchRankingService: DriftSearchRankingService = DriftSearchRankingService(),
+    calendar: Calendar = .current,
+    now: @escaping () -> Date = Date.init
   ) {
     self.journalRepository = journalRepository
     self.spaceRepository = spaceRepository
     self.searchRankingService = searchRankingService
+    self.calendar = calendar
+    self.now = now
+    selectedDate = calendar.startOfDay(for: now())
+    selectedMonth = Self.startOfMonth(for: now(), calendar: calendar)
   }
 
   var visibleEntries: [JournalEntry] {
@@ -55,6 +71,73 @@ final class JournalHomeViewModel {
 
   var isSearching: Bool {
     !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  var dateStripDays: [Date] {
+    let today = calendar.startOfDay(for: now())
+
+    return (0..<7)
+      .reversed()
+      .compactMap { offset in
+        calendar.date(byAdding: .day, value: -offset, to: today)
+      }
+  }
+
+  var selectedMonthTitle: String {
+    selectedMonth.formatted(.dateTime.month(.wide).year())
+  }
+
+  var selectedMonthID: String {
+    Self.calendarIdentity(for: selectedMonth, calendar: calendar)
+  }
+
+  var weekdaySymbols: [String] {
+    let symbols = calendar.veryShortStandaloneWeekdaySymbols
+    guard !symbols.isEmpty else {
+      return []
+    }
+
+    let firstIndex = (calendar.firstWeekday - 1 + symbols.count) % symbols.count
+    return Array(symbols[firstIndex...] + symbols[..<firstIndex])
+  }
+
+  var calendarDays: [CalendarDayState] {
+    guard
+      let monthRange = calendar.range(of: .day, in: .month, for: selectedMonth),
+      let firstDayOfMonth = calendar.date(
+        from: calendar.dateComponents([.year, .month], from: selectedMonth))
+    else {
+      return []
+    }
+
+    let monthID = Self.calendarIdentity(for: firstDayOfMonth, calendar: calendar)
+    let leadingBlankCount =
+      (calendar.component(.weekday, from: firstDayOfMonth) - calendar.firstWeekday + 7) % 7
+    var days = (0..<leadingBlankCount).map { index in
+      CalendarDayState.empty(id: "capture-\(monthID)-leading-\(index)")
+    }
+
+    days += monthRange.compactMap { day -> CalendarDayState? in
+      guard let date = calendar.date(byAdding: .day, value: day - 1, to: firstDayOfMonth) else {
+        return nil
+      }
+
+      return CalendarDayState(
+        id: "capture-\(monthID)-day-\(day)",
+        date: date,
+        dayNumber: day,
+        hasEntries: dateHasEntries(date),
+        isSelected: selectedDate.map { calendar.isDate($0, inSameDayAs: date) } ?? false,
+        isToday: calendar.isDateInToday(date)
+      )
+    }
+
+    let trailingBlankCount = (7 - (days.count % 7)) % 7
+    days += (0..<trailingBlankCount).map { index in
+      CalendarDayState.empty(id: "capture-\(monthID)-trailing-\(index)")
+    }
+
+    return days
   }
 
   var visibleEntriesSectionTitle: String {
@@ -93,10 +176,12 @@ final class JournalHomeViewModel {
 
     do {
       entries = try await journalRepository.fetchEntries()
+      daysWithEntries = Set(entries.map { calendar.startOfDay(for: $0.createdAt) })
       spacesByID = await loadSpacesByID()
     } catch {
       errorMessage = userFacingErrorMessage(for: error)
       entries = []
+      daysWithEntries = []
       spacesByID = [:]
     }
 
@@ -115,6 +200,37 @@ final class JournalHomeViewModel {
     entries.first { $0.id == id }
   }
 
+  func selectDate(_ date: Date?) {
+    if let date, selectedDate.map({ calendar.isDate($0, inSameDayAs: date) }) == true {
+      selectedDate = nil
+    } else {
+      selectedDate = date
+      if let date {
+        updateSelectedMonth(Self.startOfMonth(for: date, calendar: calendar))
+      }
+    }
+  }
+
+  func toggleCalendarExpansion() {
+    isCalendarExpanded.toggle()
+  }
+
+  func moveSelectedMonth(by value: Int) {
+    guard value != 0 else {
+      monthTransitionDirection = .none
+      return
+    }
+
+    if let month = calendar.date(byAdding: .month, value: value, to: selectedMonth) {
+      monthTransitionDirection = value > 0 ? .next : .previous
+      selectedMonth = Self.startOfMonth(for: month, calendar: calendar)
+    }
+  }
+
+  func dateHasEntries(_ date: Date) -> Bool {
+    daysWithEntries.contains(calendar.startOfDay(for: date))
+  }
+
   private func loadSpacesByID() async -> [UUID: DriftSpace] {
     do {
       let spaces = try await spaceRepository.fetchSpaces()
@@ -131,12 +247,31 @@ final class JournalHomeViewModel {
     return entry.driftType == selectedDriftTypeFilter
   }
 
+  private func updateSelectedMonth(_ month: Date) {
+    if calendar.isDate(month, equalTo: selectedMonth, toGranularity: .month) {
+      monthTransitionDirection = .none
+    } else {
+      monthTransitionDirection = month > selectedMonth ? .next : .previous
+      selectedMonth = month
+    }
+  }
+
   private func userFacingErrorMessage(for error: any Error) -> String {
     if let repositoryError = error as? JournalRepositoryError {
       return repositoryError.localizedDescription
     }
 
     return "We could not load your Drifts."
+  }
+
+  private static func startOfMonth(for date: Date, calendar: Calendar) -> Date {
+    let components = calendar.dateComponents([.year, .month], from: date)
+    return calendar.date(from: components) ?? calendar.startOfDay(for: date)
+  }
+
+  private static func calendarIdentity(for date: Date, calendar: Calendar) -> String {
+    let components = calendar.dateComponents([.year, .month], from: date)
+    return "\(components.year ?? 0)-\(components.month ?? 0)"
   }
 }
 

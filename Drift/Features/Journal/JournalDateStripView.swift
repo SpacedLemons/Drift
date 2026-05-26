@@ -54,7 +54,7 @@ struct CalendarStripView: View {
   private let compactStripHeight: CGFloat = 62
 
   var body: some View {
-    VStack(alignment: .leading, spacing: AppSpacing.s) {
+    VStack(alignment: .leading, spacing: AppSpacing.xs) {
       calendarHeader
       compactDateStrip
         .opacity(isExpanded ? 0 : 1)
@@ -89,7 +89,7 @@ struct CalendarStripView: View {
         .font(.caption)
         .foregroundStyle(AppColors.accentSecondary)
 
-      Text(isExpanded ? "Calendar" : "Recent days")
+      Text(isExpanded ? "Calendar" : selectedMonthTitle)
         .font(AppTypography.caption)
         .foregroundStyle(AppColors.textSecondary)
 
@@ -117,8 +117,13 @@ struct CalendarStripView: View {
   }
 
   private var compactDateStrip: some View {
-    ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: AppSpacing.s) {
+    GeometryReader { proxy in
+      let cellSpacing = AppSpacing.xs
+      let availableWidth = max(proxy.size.width, 1)
+      let totalSpacing = cellSpacing * CGFloat(max(compactDays.count - 1, 0))
+      let cellWidth = max((availableWidth - totalSpacing) / CGFloat(max(compactDays.count, 1)), 32)
+
+      HStack(spacing: cellSpacing) {
         ForEach(compactDays, id: \.self) { day in
           Button(
             action: {
@@ -127,17 +132,18 @@ struct CalendarStripView: View {
               }
             },
             label: {
-              compactDateCell(for: day)
+              compactDateCell(for: day, width: cellWidth)
             }
           )
           .buttonStyle(.plain)
         }
       }
-      .padding(.vertical, 1)
+      .frame(width: availableWidth, height: compactStripHeight, alignment: .leading)
     }
+    .frame(height: compactStripHeight)
   }
 
-  private func compactDateCell(for day: Date) -> some View {
+  private func compactDateCell(for day: Date, width: CGFloat) -> some View {
     let isSelected = selectedDate.map { calendar.isDate($0, inSameDayAs: day) } ?? false
 
     return ZStack {
@@ -155,7 +161,7 @@ struct CalendarStripView: View {
           )
       }
 
-      VStack(spacing: AppSpacing.xxs) {
+      VStack(spacing: 1) {
         Text(day, format: .dateTime.weekday(.narrow))
           .font(AppTypography.caption)
           .foregroundStyle(isSelected ? .white : AppColors.textTertiary)
@@ -164,7 +170,8 @@ struct CalendarStripView: View {
           .font(.system(.headline, design: .rounded, weight: .semibold))
           .foregroundStyle(isSelected ? .white : AppColors.textPrimary)
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      .padding(.top, 7)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
       if dateHasEntries(day) {
         VStack {
@@ -174,10 +181,10 @@ struct CalendarStripView: View {
             .fill(AppColors.accentSecondary)
             .frame(width: 5, height: 5)
         }
-        .padding(.bottom, AppSpacing.xs)
+        .padding(.bottom, 7)
       }
     }
-    .frame(width: 48, height: 60)
+    .frame(width: width, height: 60)
     .overlay {
       RoundedRectangle(cornerRadius: AppTheme.controlCornerRadius)
         .stroke(isSelected ? AppColors.accent.opacity(0.4) : AppColors.border, lineWidth: 1)

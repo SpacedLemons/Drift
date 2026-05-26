@@ -9,6 +9,8 @@ import SwiftUI
 
 struct JournalHomeView: View {
   @State private var viewModel: JournalHomeViewModel
+  @State private var isSearchPresented = false
+  @State private var isCalendarPresented = true
 
   let reloadToken: UUID
   let onEntrySelected: (JournalEntry) -> Void
@@ -37,10 +39,18 @@ struct JournalHomeView: View {
         VStack(alignment: .leading, spacing: AppSpacing.l) {
           header
 
-          SearchBar(
-            text: $bindableViewModel.searchText,
-            placeholder: "Search your Drifts"
-          )
+          if isSearchPresented {
+            SearchBar(
+              text: $bindableViewModel.searchText,
+              placeholder: "Search your Drifts"
+            )
+            .transition(.move(edge: .top).combined(with: .opacity))
+          }
+
+          if isCalendarPresented {
+            calendarSection
+              .transition(.move(edge: .top).combined(with: .opacity))
+          }
 
           filterPills
 
@@ -62,26 +72,156 @@ struct JournalHomeView: View {
     }
     .navigationTitle("Drift")
     .navigationBarTitleDisplayMode(.large)
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        toolbarButtons
+      }
+    }
     .task(id: reloadToken) {
       await viewModel.load()
     }
+    .animation(AppAnimation.gentle, value: isSearchPresented)
+    .animation(AppAnimation.gentle, value: isCalendarPresented)
   }
 
   private var header: some View {
-    HStack(alignment: .top, spacing: AppSpacing.m) {
+    VStack(alignment: .leading, spacing: AppSpacing.s) {
       Text("Let your thoughts Drift.")
         .font(AppTypography.body)
         .foregroundStyle(AppColors.textSecondary)
         .fixedSize(horizontal: false, vertical: true)
+    }
+  }
 
-      Spacer(minLength: AppSpacing.s)
+  private var calendarSection: some View {
+    CalendarStripView(
+      compactDays: viewModel.dateStripDays,
+      selectedDate: viewModel.selectedDate,
+      selectedMonthTitle: viewModel.selectedMonthTitle,
+      selectedMonthID: viewModel.selectedMonthID,
+      monthTransitionDirection: viewModel.monthTransitionDirection,
+      weekdaySymbols: viewModel.weekdaySymbols,
+      calendarDays: viewModel.calendarDays,
+      isExpanded: viewModel.isCalendarExpanded,
+      toggleExpansion: viewModel.toggleCalendarExpansion,
+      selectDate: viewModel.selectDate,
+      moveMonth: viewModel.moveSelectedMonth,
+      dateHasEntries: viewModel.dateHasEntries
+    )
+    .padding(.horizontal, AppSpacing.xs)
+    .padding(.vertical, AppSpacing.xs)
+    .background(
+      AppColors.surface.opacity(0.72),
+      in: RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
+    )
+    .overlay {
+      RoundedRectangle(cornerRadius: AppTheme.cardCornerRadius)
+        .stroke(AppColors.border, lineWidth: 1)
+    }
+  }
 
-      Image(systemName: AppIcons.shield)
-        .font(.system(size: 18, weight: .semibold))
-        .foregroundStyle(AppColors.accentSecondary)
-        .frame(width: 38, height: 38)
-        .background(AppColors.accentSecondary.opacity(0.12), in: Circle())
-        .accessibilityLabel("Private local Drifts")
+  @ViewBuilder
+  private var toolbarButtons: some View {
+    if #available(iOS 26.0, *) {
+      GlassEffectContainer(spacing: AppSpacing.xs) {
+        HStack(spacing: AppSpacing.xs) {
+          toolbarButton(
+            systemImage: AppIcons.search,
+            isSelected: isSearchPresented,
+            accessibilityLabel: isSearchPresented ? "Hide search" : "Show search",
+            action: toggleSearch
+          )
+
+          toolbarButton(
+            systemImage: AppIcons.calendar,
+            isSelected: isCalendarPresented,
+            accessibilityLabel: isCalendarPresented ? "Hide calendar" : "Show calendar",
+            action: toggleCalendarVisibility
+          )
+        }
+      }
+    } else {
+      HStack(spacing: AppSpacing.xs) {
+        toolbarButton(
+          systemImage: AppIcons.search,
+          isSelected: isSearchPresented,
+          accessibilityLabel: isSearchPresented ? "Hide search" : "Show search",
+          action: toggleSearch
+        )
+
+        toolbarButton(
+          systemImage: AppIcons.calendar,
+          isSelected: isCalendarPresented,
+          accessibilityLabel: isCalendarPresented ? "Hide calendar" : "Show calendar",
+          action: toggleCalendarVisibility
+        )
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func toolbarButton(
+    systemImage: String,
+    isSelected: Bool,
+    accessibilityLabel: String,
+    action: @escaping () -> Void
+  ) -> some View {
+    if #available(iOS 26.0, *) {
+      Button(action: action) {
+        toolbarButtonIcon(systemImage: systemImage, isSelected: isSelected)
+      }
+      .buttonStyle(.plain)
+      .glassEffect(
+        .regular.tint(toolbarButtonTint(isSelected: isSelected)).interactive(),
+        in: .rect(cornerRadius: 19)
+      )
+      .accessibilityLabel(accessibilityLabel)
+      .accessibilityAddTraits(isSelected ? .isSelected : [])
+    } else {
+      Button(action: action) {
+        toolbarButtonIcon(systemImage: systemImage, isSelected: isSelected)
+          .background(
+            isSelected ? AppColors.accent.opacity(0.18) : AppColors.surfaceRaised.opacity(0.86),
+            in: Circle()
+          )
+          .overlay {
+            Circle()
+              .stroke(isSelected ? AppColors.accent.opacity(0.42) : AppColors.border, lineWidth: 1)
+          }
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel(accessibilityLabel)
+      .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+  }
+
+  private func toolbarButtonIcon(systemImage: String, isSelected: Bool) -> some View {
+    Image(systemName: systemImage)
+      .font(.system(size: 16, weight: .semibold))
+      .foregroundStyle(isSelected ? AppColors.accent : AppColors.textPrimary)
+      .frame(width: 38, height: 38)
+      .contentShape(Circle())
+  }
+
+  private func toolbarButtonTint(isSelected: Bool) -> Color {
+    isSelected ? AppColors.accent.opacity(0.18) : AppColors.surface.opacity(0.44)
+  }
+
+  private func toggleSearch() {
+    withAnimation(AppAnimation.gentle) {
+      isSearchPresented.toggle()
+      if !isSearchPresented {
+        viewModel.searchText = ""
+      }
+    }
+  }
+
+  private func toggleCalendarVisibility() {
+    withAnimation(AppAnimation.gentle) {
+      isCalendarPresented.toggle()
+      if !isCalendarPresented && viewModel.isCalendarExpanded {
+        viewModel.toggleCalendarExpansion()
+      }
     }
   }
 

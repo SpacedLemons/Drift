@@ -59,6 +59,43 @@ struct JournalHomeViewModelTests {
   }
 
   @Test
+  func captureCalendarStartsCompactOnCurrentDay() {
+    let calendar = calendarForHomeTests()
+    let now = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 26)
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: []),
+      calendar: calendar,
+      now: { now }
+    )
+
+    #expect(!viewModel.isCalendarExpanded)
+    #expect(viewModel.selectedDate == calendar.startOfDay(for: now))
+    #expect(viewModel.dateStripDays.count == 7)
+  }
+
+  @Test
+  func captureCalendarMarksLoadedEntryDates() async throws {
+    let calendar = calendarForHomeTests()
+    let entryDate = fixtureDate(calendar: calendar, year: 2026, month: 5, day: 21)
+    let entry = JournalEntry(
+      id: fixtureUUID("A1000000-0000-0000-0000-000000000010"),
+      createdAt: entryDate,
+      transcript: "A dated Drift.",
+      driftType: .thought
+    )
+    let viewModel = JournalHomeViewModel(
+      journalRepository: PreviewJournalRepository(entries: [entry]),
+      calendar: calendar,
+      now: { fixtureDate(calendar: calendar, year: 2026, month: 5, day: 26) }
+    )
+
+    await viewModel.load()
+
+    #expect(viewModel.dateHasEntries(entryDate))
+    #expect(!viewModel.isCalendarExpanded)
+  }
+
+  @Test
   func captureUsesProductQuickDriftTypeFilters() {
     let viewModel = JournalHomeViewModel(
       journalRepository: PreviewJournalRepository(entries: [])
@@ -334,4 +371,11 @@ struct JournalHomeViewModelTests {
 
 private enum TestJournalHomeRepositoryError: Error {
   case failed
+}
+
+private func calendarForHomeTests() -> Calendar {
+  var calendar = Calendar(identifier: .gregorian)
+  calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+  calendar.locale = Locale(identifier: "en_GB")
+  return calendar
 }
